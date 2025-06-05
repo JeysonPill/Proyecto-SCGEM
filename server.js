@@ -42,7 +42,6 @@ const authenticateToken = (req, res, next) => {
 
 };
 
-// Role check middleware
 const checkRole = (roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.user_role)) {
@@ -52,7 +51,6 @@ const checkRole = (roles) => {
   };
 };
 
-// COMMON ROUTES
 
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
@@ -84,8 +82,9 @@ app.post('/login', (req, res) => {
       }
     });
   });
+});
 
-  ///////////////////////////////////////////////////////       ESTUDIANTES       ////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////       ESTUDIANTES       ////////////////////////////////////////////////////////////////////////////////
 // Estudiantes
 // Rutas de Estudiantes
 app.get('/students', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN, ROLES.STUDENT]), (req, res) => {
@@ -139,9 +138,9 @@ app.delete('/students/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROL
   });
 });
 
-  /////////////////       MATERIAS       ////////////////////////////////////////////
-  app.get('/student/tabla-datos-estudiante/', authenticateToken, (req, res) => {
-    const query = `
+/////////////////       MATERIAS       ////////////////////////////////////////////
+app.get('/student/tabla-datos-estudiante/', authenticateToken, (req, res) => {
+  const query = `
     SELECT 
     MATERIAS.materia_nombre AS materia_nombre,
     PROFESORES.nombre AS profesor_nombre,
@@ -160,15 +159,15 @@ JOIN GRUPOSALUM ON GRUPOSALUM.id_materia = MATERIAS.id_materia
 JOIN ALUMNOS ON GRUPOSALUM.matricula_alumno = ALUMNOS.matricula
 WHERE ALUMNOS.matricula = ?;
   `;
-    db.query(query, [req.user.user_matricula], (err, results) => {
-      if (err) return res.status(500).json({ message: 'Database error' });
-      console.log(results);
-      res.json(results);
-    });
+  db.query(query, [req.user.user_matricula], (err, results) => {
+    if (err) return res.status(500).json({ message: 'Database error' });
+    console.log(results);
+    res.json(results);
   });
+});
 
-  /////////////////       MATERIAS       ////////////////////////////////////////////
-  app.get('/subjects', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN, ROLES.STUDENT, ROLES.PROFESSOR]), (req, res) => {
+/////////////////       MATERIAS       ////////////////////////////////////////////
+app.get('/subjects', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN, ROLES.STUDENT, ROLES.PROFESSOR]), (req, res) => {
   const query = 'SELECT * FROM MATERIAS'; // Asume que tu tabla es MATERIAS
   db.query(query, (err, results) => {
     if (err) {
@@ -191,9 +190,9 @@ app.get('/schedules', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUP
   });
 });
 
-  /////////////////       KARDEZ       ///////////////////////////////////////
-  app.get('/student/tabla-kardex', authenticateToken, (req, res) => {
-    const query = `
+/////////////////       KARDEZ       ///////////////////////////////////////
+app.get('/student/tabla-kardex', authenticateToken, (req, res) => {
+  const query = `
  SELECT 
     m.materia_nombre AS materia,
     c.ciclo_cursando AS periodo,
@@ -205,17 +204,17 @@ app.get('/schedules', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUP
     END AS estado
 FROM CALIFICACIONES c
 JOIN MATERIAS m ON c.id_materia = m.id_materia
-WHERE c.matricula = 'A0001';
+WHERE c.matricula = ?;
 `;
-    db.query(query, [req.user.user_matricula], (err, results) => {
-      if (err) return res.status(500).json({ message: 'Database error' });
-      console.log(results);
-      res.json(results);
-    });
+  db.query(query, [req.user.user_matricula], (err, results) => {
+    if (err) return res.status(500).json({ message: 'Database error' });
+    console.log(results);
+    res.json(results);
   });
-  /////////////////       PAGOS       ///////////////////////////////////////
-  app.get('/student/tabla-pagos', authenticateToken, (req, res) => {
-    const query = `
+});
+/////////////////       PAGOS       ///////////////////////////////////////
+app.get('/student/tabla-pagos', authenticateToken, (req, res) => {
+  const query = `
     SELECT 
     DATE_FORMAT(p.fecha_vencimiento, '%M') AS MES,  -- Extracts month name
     p.pago_mensual AS CANTIDAD,
@@ -235,38 +234,38 @@ WHERE c.matricula = 'A0001';
   JOIN ALUMNOS on ALUMNOS.matricula = p.matricula
   where ALUMNOS.matricula = ?;
   `;
-    db.query(query, [req.user.user_matricula], (err, results) => {
-      if (err) return res.status(500).json({ message: 'Database error' });
-      console.log(results);
-      res.json(results);
-    });
+  db.query(query, [req.user.user_matricula], (err, results) => {
+    if (err) return res.status(500).json({ message: 'Database error' });
+    console.log(results);
+    res.json(results);
   });
+});
 
 
-  /////////////////       ASISTENCIAS       ///////////////////////////////////////
-  app.post('/student/registro-asistencias', authenticateToken, (req, res) => {
-    const { codigo_asistencia } = req.body;
-    const user_matricula = req.user.user_matricula;
-    if (!codigo_asistencia)
-      return res.status(400).json({ success: false, message: "Código de asistencia requerido" });
+/////////////////       ASISTENCIAS       ///////////////////////////////////////
+app.post('/student/registro-asistencias', authenticateToken, (req, res) => {
+  const { codigo_asistencia } = req.body;
+  const user_matricula = req.user.user_matricula;
+  if (!codigo_asistencia)
+    return res.status(400).json({ success: false, message: "Código de asistencia requerido" });
 
-    const query = ` INSERT INTO ASISTENCIA (matricula, codigo, asistencia) VALUES (?, ?, NOW()); `;
-    db.query(query, [user_matricula, codigo_asistencia], (err, result) => {
-      if (err) {
-        console.log(err);
-        return res.status(500).json({ success: false, message: "Database error" });
-      }
-      res.json({ success: true, message: "Asistencia registrada correctamente" });
-    });
+  const query = ` INSERT INTO ASISTENCIA (matricula, codigo, asistencia) VALUES (?, ?, NOW()); `;
+  db.query(query, [user_matricula, codigo_asistencia], (err, result) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).json({ success: false, message: "Database error" });
+    }
+    res.json({ success: true, message: "Asistencia registrada correctamente" });
   });
+});
 
-  ///////////////////////////////////////////////////////    FIN   ESTUDIANTES       ////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////    FIN   ESTUDIANTES       ////////////////////////////////////////////////////////////////////////////////
 
 
 
 // Rutas de Profesores
 app.get('/professors', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN, ROLES.PROFESSOR]), (req, res) => {
-  const query = 'SELECT * FROM PROFESORES'; 
+  const query = 'SELECT * FROM PROFESORES';
   db.query(query, (err, results) => {
     if (err) {
       console.error("Error al obtener profesores:", err);
@@ -316,11 +315,11 @@ app.delete('/professors/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, R
   });
 });
 
-  ///////////////////////////////////////////////////////       PROFESORES       ////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////       PROFESORES       ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////       PROFESORES DATOS      ///////////////////////////////////////
 
-  app.get('/professor/schedule/', authenticateToken, (req, res) => {
-    const query = `
+app.get('/professor/schedule/', authenticateToken, (req, res) => {
+  const query = `
     SELECT 
       M.materia_nombre AS materia_nombre,
       H.id_grupo,
@@ -336,23 +335,21 @@ app.delete('/professors/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, R
     JOIN PROFESORES P ON P.id_profesor = H.id_profesor
     WHERE P.id_profesor = ?;
   `;
-
-    console.log("matre", req.user.user_matricula);
-    db.query(query, [req.user.user_matricula], (err, results) => {
-      if (err) return res.status(500).json({ message: 'Database error' });
-      console.log(results);
-      res.json(results);
-    });
+  db.query(query, [req.user.user_matricula], (err, results) => {
+    if (err) return res.status(500).json({ message: 'Database error' });
+    console.log(results);
+    res.json(results);
   });
+});
 
 
 
-  //////////////////////////////////////////////////////// QR ASISTENCIA //////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////// QR ASISTENCIA //////////////////////////////////////////////////////////////////
 
 
 
-  app.get('/professor/QR_CODE_GEN/', authenticateToken, (req, res) => {
-    const query = `
+app.get('/professor/QR_CODE_GEN/', authenticateToken, (req, res) => {
+  const query = `
     SELECT 
       GRUPOSALUM.id_materia,
       MATERIAS.materia_nombre,
@@ -366,25 +363,25 @@ app.delete('/professors/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, R
 
 
 
-    console.log("matricula del profesor:", req.user.user_matricula);
+  console.log("matricula del profesor:", req.user.user_matricula);
 
-    db.query(query, [req.user.user_matricula], (err, results) => {
-      if (err) return res.status(500).json({ message: 'Database error' });
-      console.log(results);
-      res.json(results);  // Return the query results
-    });
+  db.query(query, [req.user.user_matricula], (err, results) => {
+    if (err) return res.status(500).json({ message: 'Database error' });
+    console.log(results);
+    res.json(results);  // Return the query results
   });
+});
 
 
 
-  //////////////
-  ///////////////////       CALIFICAICONES /////////////////////////
+//////////////
+///////////////////       CALIFICAICONES /////////////////////////
 
 
 
-  app.get('/professor/getSubjects', authenticateToken, (req, res) => {
+app.get('/professor/getSubjects', authenticateToken, (req, res) => {
 
-    const query = `
+  const query = `
       SELECT DISTINCT
       MATERIAS.materia_nombre
     FROM MATERIAS
@@ -393,20 +390,20 @@ app.delete('/professors/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, R
     JOIN PROFESORES ON MATERIASPROF.id_profesor = PROFESORES.id_profesor
     WHERE PROFESORES.id_profesor = ?;
     `;
-    console.log("matricula del profesor:", req.user.user_matricula);
+  console.log("matricula del profesor:", req.user.user_matricula);
 
-    db.query(query, [req.user.user_matricula], (err, results) => {
-      if (err) return res.status(500).json({ message: 'Database error' });
-      console.log(results);
-      res.json(results);  // Return the query results
-    });
+  db.query(query, [req.user.user_matricula], (err, results) => {
+    if (err) return res.status(500).json({ message: 'Database error' });
+    console.log(results);
+    res.json(results);  // Return the query results
   });
+});
 
 
 
-  app.get('/professor/getStudents', async (req, res) => {
-    let { subjectId } = req.query;
-    let query = `
+app.get('/professor/getStudents', async (req, res) => {
+  let { subjectId } = req.query;
+  let query = `
           SELECT 
     A.matricula, A.user_name, C.calif_p1, C.calif_p2, C.calif_final
 FROM ALUMNOS A
@@ -415,48 +412,47 @@ LEFT JOIN CALIFICACIONES C ON A.matricula = C.matricula AND G.id_materia = C.id_
 WHERE G.id_materia = /;
 
       `;
-    db.query(query, [subjectId], (err, results) => {
-      if (err) return res.status(500).json({ message: 'Database error' });
-      console.log(results);
-      res.json(results);  // Return the query results
-    })
-  });
+  db.query(query, [subjectId], (err, results) => {
+    if (err) return res.status(500).json({ message: 'Database error' });
+    console.log(results);
+    res.json(results);  // Return the query results
+  })
+});
 
 
-  app.post('/professor/insertGrade', async (req, res) => {
-    let { id_materia, matricula, calif_p1, calif_p2, calif_final, ciclo_cursando } = req.body;
+app.post('/professor/insertGrade', async (req, res) => {
+  let { id_materia, matricula, calif_p1, calif_p2, calif_final, ciclo_cursando } = req.body;
 
-    if (![calif_p1, calif_p2, calif_final].every(grade => grade === null || (Number.isInteger(grade) && grade >= 0 && grade <= 10))) {
-      return res.status(400).json({ error: "Invalid grade values" });
-    }
+  if (![calif_p1, calif_p2, calif_final].every(grade => grade === null || (Number.isInteger(grade) && grade >= 0 && grade <= 10))) {
+    return res.status(400).json({ error: "Invalid grade values" });
+  }
 
-    try {
-      let checkQuery = "SELECT * FROM CALIFICACIONES WHERE matricula = ? AND id_materia = ?";
-      let [existing] = await db.query(checkQuery, [matricula, id_materia]);
+  try {
+    let checkQuery = "SELECT * FROM CALIFICACIONES WHERE matricula = ? AND id_materia = ?";
+    let [existing] = await db.query(checkQuery, [matricula, id_materia]);
 
-      if (existing.length > 0) {
-        let updateQuery = `
+    if (existing.length > 0) {
+      let updateQuery = `
               UPDATE CALIFICACIONES 
               SET calif_p1 = ?, calif_p2 = ?, calif_final = ?, ciclo_cursando = ? 
               WHERE matricula = ? AND id_materia = ?
           `;
-        await db.query(updateQuery, [calif_p1, calif_p2, calif_final, ciclo_cursando, matricula, id_materia]);
-      } else {
-        let insertQuery = `
+      await db.query(updateQuery, [calif_p1, calif_p2, calif_final, ciclo_cursando, matricula, id_materia]);
+    } else {
+      let insertQuery = `
               INSERT INTO CALIFICACIONES (id_materia, matricula, calif_p1, calif_p2, calif_final, ciclo_cursando)
               VALUES (?, ?, ?, ?, ?, ?)
           `;
-        await db.query(insertQuery, [id_materia, matricula, calif_p1, calif_p2, calif_final, ciclo_cursando]);
-      }
-
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+      await db.query(insertQuery, [id_materia, matricula, calif_p1, calif_p2, calif_final, ciclo_cursando]);
     }
-  });
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 
-  app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
-  });
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
 });

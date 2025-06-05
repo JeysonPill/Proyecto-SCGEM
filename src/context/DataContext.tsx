@@ -1,357 +1,235 @@
-// src/context/DataContext.tsx
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from 'react';
-import {
-  getAllStudents,
-  getAllProfessors,
-  getAllSubjects,
-  getAllSchedules,
-  // Asegúrate de importar tus funciones CRUD también si las pasas por el contexto
-  createStudent,
-  //updateStudent,
-  //deleteStudent,
-  createProfessor,
-  //updateProfessor,
-  //deleteProfessor,
-  createSubject,
- // updateSubject,
-  //deleteSubject,
-  createSchedule,
-  //updateSchedule,
-  //deleteSchedule,
-} from '../services/api'; // Importación correcta de funciones API
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import * as api from '../services/api';
 
-import { useAuth } from './AuthContext'; // Importa useAuth para acceder al rol del usuario
-
-// ¡Añade 'export' a cada interfaz!
-export interface Student {
-  id_student: string; // O el tipo de ID que uses
-  user_name: string;
+// Tipos
+export type Student = {
+  id: string;
+  id_student: string;
   matricula: string;
   carrera: string;
+  semestre: number;
+  user_name: string;
+  celular: string;
   email: string;
-  user_role: string;
-  password?: string; // Asegúrate de incluirla si es parte del tipo
-  // Añade todas las propiedades de Student
-}
-
-export interface Subject {
-  id_materia: string; // O el tipo de ID que uses
-  materia_nombre: string;
-  sem_cursante: string;
-  // Añade todas las propiedades de Subject
-}
+};
 
 export interface Professor {
-  id_profesor: string; // O el tipo de ID que uses
+  id_profesor: string;
   nombre: string;
+  celular: string;
   email: string;
-  user_role: string;
-  password?: string; // Asegúrate de incluirla si es parte del tipo
-  // Añade todas las propiedades de Professor
 }
 
-export interface Schedule {
-  id_horario: string; // O el tipo de ID que uses
+
+export type Subject = {
+  id_materia: string;
+  materia_nombre: string;
+  sem_cursante: number;
+};
+
+export type Schedule = {
   id_materia: string;
   id_grupo: string;
-  hora_inicio: string;
-  hora_fin: string;
-  dia_semana: string;
-  id_profesor: string; // Para relacionar con el profesor que la imparte
-  // Añade todas las propiedades de Schedule
-}
+  id_profesor: string;
+  h_lunes: string;
+  h_martes: string;
+  h_miercoles: string;
+  h_jueves: string;
+  h_viernes: string;
+};
 
-interface DataContextType {
+type DataContextType = {
+  professors: any[];
   students: Student[];
   subjects: Subject[];
-  professors: Professor[];
   schedules: Schedule[];
-  isLoading: boolean;
-  // Funciones CRUD para estudiantes
-  addStudent: (student: Omit<Student, 'id_student'>) => Promise<void>;
-  updateStudent: (id: string, student: Partial<Student>) => Promise<void>;
-  deleteStudent: (id: string) => Promise<void>;
-  // Funciones CRUD para profesores
+
   addProfessor: (professor: Omit<Professor, 'id_profesor'>) => Promise<void>;
-  updateProfessor: (id: string, professor: Partial<Professor>) => Promise<void>;
-  deleteProfessor: (id: string) => Promise<void>;
-  // Funciones CRUD para materias
+  updateProfessor: (id_profesor: string, professor: Omit<Professor, 'id_profesor'>) => Promise<void>;
+  deleteProfessor: (id_profesor: string) => Promise<void>;
+
+  addStudent: (student: Omit<Student, 'id_student'>) => Promise<void>;
+  updateStudent: (id_student: string, student: Omit<Student, 'id_student'>) => Promise<void>;
+  deleteStudent: (id_student: string) => Promise<void>;
+
   addSubject: (subject: Omit<Subject, 'id_materia'>) => Promise<void>;
-  updateSubject: (id: string, subject: Partial<Subject>) => Promise<void>;
-  deleteSubject: (id: string) => Promise<void>;
-  // Funciones CRUD para horarios
-  addSchedule: (schedule: Omit<Schedule, 'id_horario'>) => Promise<void>;
-  updateSchedule: (id: string, schedule: Partial<Schedule>) => Promise<void>;
-  deleteSchedule: (id: string) => Promise<void>;
-}
+  updateSubject: (id_materia: string, subject: Omit<Subject, 'id_materia'>) => Promise<void>;
+  deleteSubject: (id_materia: string) => Promise<void>;
+
+
+  fetchProfessors: () => Promise<void>;
+  fetchStudents: () => Promise<void>;
+  fetchSubjects: () => Promise<void>;
+  fetchSchedules: () => Promise<void>;
+};
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-interface DataProviderProps {
-  children: ReactNode;
-}
-
-export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
+export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [professors, setProfessors] = useState<Professor[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [professors, setProfessors] = useState<Professor[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // Nuevo estado para indicar carga de datos
-
-  const { user, isLoading: authLoading } = useAuth(); // Obtén el usuario y el estado de carga de autenticación
-  const userRole = user?.user_role; // Obtén el rol del usuario
-
-  // Define los roles como en tu backend (server.js)
-  const ROLES = {
-    STUDENT: '1',
-    PROFESSOR: '2',
-    ADMIN_STAFF: '3',
-    SUPER_ADMIN: '99',
-  };
-
-  useEffect(() => {
-    // Solo intenta cargar datos si la autenticación ha terminado y hay un usuario
-    if (!authLoading && user) {
-      const fetchData = async () => {
-        setIsLoading(true); // Inicia carga de datos
-        try {
-          // Cargar estudiantes (Admin Staff, Superadmin)
-          if (userRole === ROLES.ADMIN_STAFF || userRole === ROLES.SUPER_ADMIN || userRole === ROLES.STUDENT) {
-            const studentsData = await getAllStudents();
-            setStudents(studentsData);
-          } else {
-            setStudents([]); // Asegúrate de limpiar el estado si el usuario no tiene acceso
-          }
-
-          // Cargar profesores (Admin Staff, Superadmin, Profesor)
-          if (userRole === ROLES.ADMIN_STAFF || userRole === ROLES.SUPER_ADMIN || userRole === ROLES.PROFESSOR) {
-            const professorsData = await getAllProfessors();
-            setProfessors(professorsData);
-          } else {
-            setProfessors([]);
-          }
-
-          // Cargar materias (Todos los roles)
-          if (userRole) { // Todos los roles pueden ver materias
-            const subjectsData = await getAllSubjects();
-            setSubjects(subjectsData);
-          } else {
-            setSubjects([]);
-          }
 
 
-          // Cargar horarios (Todos los roles)
-          if (userRole) { // Todos los roles pueden ver horarios
-            const schedulesData = await getAllSchedules();
-            setSchedules(schedulesData);
-          } else {
-            setSchedules([]);
-          }
 
-        } catch (error) {
-          console.error('Error obtener los datos por rol ' + userRole + ':', error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      fetchData();
-    } else if (!authLoading && !user) {
-        setIsLoading(false);
+  const addProfessor = async (id_professor: Omit<Professor, 'id_profesor'>) => {
+    try {
+      const newProfessor = await api.createProfessor(id_professor);
+      setProfessors(prev => [...prev, newProfessor]);
+    } catch (error) {
+      console.error('Error al agregar profesor', error);
     }
-  }, [user, authLoading, userRole]); 
-
-
+  };
+  const updateProfessor = async (id_profesor: string, professor: Omit<Professor, 'id_profesor'>) => {
+    try {
+      const updatedProfessor = await api.updateProfessor(id_profesor, professor);
+      setProfessors(prev => prev.map(p => (p.id_profesor === id_profesor ? updatedProfessor : p)));
+    } catch (error) {
+      console.error('Error al actualizar profesor', error);
+    }
+  }
   const addStudent = async (student: Omit<Student, 'id_student'>) => {
     try {
-      await createStudent(student);
-      if (userRole === ROLES.ADMIN_STAFF || userRole === ROLES.SUPER_ADMIN) {
-        const studentsData = await getAllStudents();
-        setStudents(studentsData);
-      }
+      const newStudent = await api.createStudent(student);
+      setStudents(prev => [...prev, newStudent]);
     } catch (error) {
-      console.error("Error adding student:", error);
-      throw error;
+      console.error('Error al agregar estudiante', error);
     }
   };
 
-  const updateStudent = async (id: string, student: Partial<Student>) => {
+  const updateStudent = async (id_student: string, student: Omit<Student, 'id_student'>) => {
     try {
-      await updateStudent(id, student);
-      if (userRole === ROLES.ADMIN_STAFF || userRole === ROLES.SUPER_ADMIN) {
-        const studentsData = await getAllStudents();
-        setStudents(studentsData);
-      }
+      const updatedStudent = await api.updateStudent(id_student, student);
+      setStudents(prev => prev.map(s => (s.id_student === id_student ? updatedStudent : s)));
     } catch (error) {
-      console.error("Error updating student:", error);
-      throw error;
+      console.error('Error al actualizar estudiante', error);
+    }
+  }
+  const fetchProfessors = async () => {
+    try {
+      const data = await api.getProfessorSubjects();
+      setProfessors(data);
+    } catch (error) {
+      console.error('Error al obtener profesores', error);
     }
   };
 
-  const deleteStudent = async (id: string) => {
+  const fetchStudents = async () => {
     try {
-      await deleteStudent(id);
-      if (userRole === ROLES.ADMIN_STAFF || userRole === ROLES.SUPER_ADMIN) {
-        const studentsData = await getAllStudents();
-        setStudents(studentsData);
-      }
+      const data = await api.getStudents();
+      setStudents(data);
     } catch (error) {
-      console.error("Error deleting student:", error);
-      throw error;
+      console.error('Error al obtener estudiantes', error);
     }
   };
 
-  // Profesores
-  const addProfessor = async (professor: Omit<Professor, 'id_profesor'>) => {
+  const fetchSubjects = async () => {
     try {
-      await createProfessor(professor);
-      if (userRole === ROLES.ADMIN_STAFF || userRole === ROLES.SUPER_ADMIN) {
-        const professorsData = await getAllProfessors();
-        setProfessors(professorsData);
-      }
+      const data = await api.getAllSubjects(); 
+      setSubjects(data);
     } catch (error) {
-      console.error("Error adding professor:", error);
-      throw error;
+      console.error('Error al obtener materias', error);
     }
   };
 
-  const updateProfessor = async (id: string, professor: Partial<Professor>) => {
-    try {
-      await updateProfessor(id, professor);
-      if (userRole === ROLES.ADMIN_STAFF || userRole === ROLES.SUPER_ADMIN) {
-        const professorsData = await getAllProfessors();
-        setProfessors(professorsData);
-      }
-    } catch (error) {
-      console.error("Error updating professor:", error);
-      throw error;
-    }
-  };
 
   const deleteProfessor = async (id: string) => {
     try {
-      await deleteProfessor(id);
-      if (userRole === ROLES.ADMIN_STAFF || userRole === ROLES.SUPER_ADMIN) {
-        const professorsData = await getAllProfessors();
-        setProfessors(professorsData);
-      }
+      await api.deleteProfessor(id);
+      setProfessors(prev => prev.filter(p => p.id_profesor !== id));
     } catch (error) {
-      console.error("Error deleting professor:", error);
-      throw error;
-    }
-  };
-
-  // Materias
-  const addSubject = async (subject: Omit<Subject, 'id_materia'>) => {
-    try {
-      await createSubject(subject);
-      if (userRole && (userRole === ROLES.ADMIN_STAFF || userRole === ROLES.SUPER_ADMIN)) {
-        const subjectsData = await getAllSubjects();
-        setSubjects(subjectsData);
-      }
-    } catch (error) {
-      console.error("Error adding subject:", error);
-      throw error;
-    }
-  };
-
-  const updateSubject = async (id: string, subject: Partial<Subject>) => {
-    try {
-      await updateSubject(id, subject);
-      if (userRole && (userRole === ROLES.ADMIN_STAFF || userRole === ROLES.SUPER_ADMIN)) {
-        const subjectsData = await getAllSubjects();
-        setSubjects(subjectsData);
-      }
-    } catch (error) {
-      console.error("Error updating subject:", error);
-      throw error;
+      console.error('Error al borrar profesor', error);
     }
   };
 
   const deleteSubject = async (id: string) => {
     try {
-      await deleteSubject(id);
-      if (userRole && (userRole === ROLES.ADMIN_STAFF || userRole === ROLES.SUPER_ADMIN)) {
-        const subjectsData = await getAllSubjects();
-        setSubjects(subjectsData);
-      }
+      await api.deleteSubject(id);
+      setSubjects(prev => prev.filter(p => p.id_materia !== id));
     } catch (error) {
-      console.error("Error deleting subject:", error);
-      throw error;
+      console.error('Error al borrar profesor', error);
     }
   };
-
-  // Horarios
-  const addSchedule = async (schedule: Omit<Schedule, 'id_horario'>) => {
+  const deleteStudent = async (id: string) => {
     try {
-      await createSchedule(schedule);
-      if (userRole && (userRole === ROLES.ADMIN_STAFF || userRole === ROLES.SUPER_ADMIN)) {
-        const schedulesData = await getAllSchedules();
-        setSchedules(schedulesData);
-      }
+      await api.deleteStudent(id);
+      setStudents(prev => prev.filter(p => p.id_student !== id));
     } catch (error) {
-      console.error("Error adding schedule:", error);
-      throw error;
+      console.error('Error al borrar profesor', error);
     }
   };
 
-  const updateSchedule = async (id: string, schedule: Partial<Schedule>) => {
+  // Add Subject
+  const addSubject = async (subject: Omit<Subject, 'id_materia'>) => {
     try {
-      await updateSchedule(id, schedule);
-      if (userRole && (userRole === ROLES.ADMIN_STAFF || userRole === ROLES.SUPER_ADMIN)) {
-        const schedulesData = await getAllSchedules();
-        setSchedules(schedulesData);
-      }
+      const newSubject = await api.createSubject(subject);
+      setSubjects(prev => [...prev, newSubject]);
     } catch (error) {
-      console.error("Error updating schedule:", error);
-      throw error;
+      console.error('Error al agregar materia', error);
     }
   };
 
-  const deleteSchedule = async (id: string) => {
+  // Update Subject
+  const updateSubject = async (id_materia: string, subject: Omit<Subject, 'id_materia'>) => {
     try {
-      await deleteSchedule(id);
-      if (userRole && (userRole === ROLES.ADMIN_STAFF || userRole === ROLES.SUPER_ADMIN)) {
-        const schedulesData = await getAllSchedules();
-        setSchedules(schedulesData);
-      }
+      const updatedSubject = await api.updateSubject(id_materia, subject);
+      setSubjects(prev => prev.map(s => (s.id_materia === id_materia ? updatedSubject : s)));
     } catch (error) {
-      console.error("Error deleting schedule:", error);
-      throw error;
+      console.error('Error al actualizar materia', error);
     }
   };
 
-
-
-  const value = {
-    students,
-    subjects,
-    professors,
-    schedules,
-    isLoading,
-    addStudent, updateStudent, deleteStudent,
-    addProfessor, updateProfessor, deleteProfessor,
-    addSubject, updateSubject, deleteSubject,
-    addSchedule, updateSchedule, deleteSchedule,
+  // Fetch Schedules
+  const fetchSchedules = async () => {
+    try {
+      const data = await api.getSchedules();
+      setSchedules(data);
+    } catch (error) {
+      console.error('Error al obtener horarios', error);
+    }
   };
 
-  if (authLoading) {
-    return <div>Cargando datos de usuario...</div>; // O un spinner más elaborado
-  }
+  useEffect(() => {
+    fetchProfessors();
+    fetchStudents();
+    fetchSubjects();
+    fetchSchedules();
+  }, []);
 
-  return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
+  return (
+    <DataContext.Provider
+      value={{
+        professors,
+        students,
+        subjects,
+        schedules,
+        addProfessor,
+        updateProfessor,
+        addStudent,
+        updateStudent,
+        addSubject,
+        updateSubject,
+        fetchProfessors,
+        fetchStudents,
+        fetchSubjects,
+        fetchSchedules,
+        deleteProfessor,
+        deleteSubject,
+        deleteStudent,
+      }}
+    >
+      {children}
+    </DataContext.Provider>
+  );
 };
 
 export const useData = () => {
   const context = useContext(DataContext);
-  if (context === undefined) {
-    throw new Error('useData must be used within a DataProvider');
+  if (!context) {
+    throw new Error('Error en obtener el contexto de datos. Asegúrate de envolver tu componente con DataProvider.');
   }
   return context;
 };
+
+export default DataContext;

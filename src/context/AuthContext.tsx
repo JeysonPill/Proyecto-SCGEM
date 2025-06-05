@@ -1,91 +1,76 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { login as apiLogin, logout as apiLogout } from '../services/api';
-import { useNavigate } from 'react-router-dom';
+import { login as apiLogin } from '../services/api';
 
-export interface User {
-  user_id: string; 
-  username: string;
+interface User {
+  user_id: string;
+  user_name: string;
   user_role: string;
-  token: string;
+  user_matricula: string;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
-  isLoading: boolean;
+  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true); 
-  const navigate = useNavigate();
 
   useEffect(() => {
-    const loadAuthData = () => {
-      try {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser && storedUser !== "undefined") {
-          const parsedUser = JSON.parse(storedUser);
-          setUser(parsedUser);
-        } else {
-          setUser(null); 
-        }
-      } catch (error) {
-        console.error('Failed to parse stored user data:', error);
-        localStorage.removeItem('user');
-      } finally {
-        setIsLoading(false); 
-      }
-    };
-
-    loadAuthData();
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    if (token && userData) {
+      setUser(JSON.parse(userData));
+    }
   }, []);
 
   const login = async (username: string, password: string) => {
-    setIsLoading(true);
     try {
-      const userData = await apiLogin(username, password);
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      navigate('/'); 
+      const response = await apiLogin(username, password);
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify({
+        user_id: response.user_id,
+        user_name: username,
+        user_role: response.user_role,
+        user_matricula: response.user_matricula
+      }));
+      setUser({
+        user_id: response.user_id,
+        user_name: username,
+        user_role: response.user_role,
+        user_matricula: response.user_matricula
+      });
     } catch (error) {
-      console.error('Login failed:', error);
-      localStorage.removeItem('user');
-      setUser(null);
-      throw error; 
-    } finally {
-        setIsLoading(false);
+      throw new Error('Login failed');
     }
   };
 
   const logout = () => {
-    setUser(null);
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
-    apiLogout();
-    navigate('/login');
+    setUser(null);
   };
 
-  const value = { user, login, logout, isLoading };
-
-  if (isLoading) {
-    return <div>Cargando autenticación...</div>;
-  }
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{
+      user,
+      login,
+      logout,
+      isAuthenticated: !!user
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('No se puede usar useAuth fuera de AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
