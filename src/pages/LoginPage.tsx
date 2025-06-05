@@ -11,7 +11,7 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,11 +21,27 @@ const LoginPage: React.FC = () => {
 
     try {
       await login(username, password);
-      navigate('/');
+
+      const role = user?.user_role;
+
+      switch (role) {
+        case '1': // Estudiante
+          navigate('/students');
+          break;
+        case '2': // Profesor
+          navigate('/professors');
+          break;
+        case '3': // Administrativo
+          navigate('/dashboard');
+          break;
+        case '99': // Super Admin
+          navigate('/admin');
+          break;
+        default:
+          navigate('/');
+      }
     } catch (err) {
       setError('Invalid username or password');
-    } finally {
-      setIsLoading(false);
     }
   };
 
