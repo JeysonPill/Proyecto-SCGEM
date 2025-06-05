@@ -13,6 +13,10 @@ const api = axios.create({
   },
 });
 
+// Función de logout
+export const logout = async () => {
+  return Promise.resolve();
+};
 // Añadir token a las solicitudes si existe
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken'); // Debe coincidir con la clave usada en AuthContext
@@ -44,24 +48,24 @@ export const getAllStudents = async (): Promise<Student[]> => {
 
 // Las funciones específicas de estudiante que tenías pueden seguir:
 export const getStudentScheduleAndSubjects = async (): Promise<Student[]> => {
-  const res = await api.get('/student/tabla-datos-estudiante');
+  const res = await api.get('/student');
   return res.data;
 };
 
 export const createStudent = async (student: Omit<Student, 'id_student'>): Promise<Student> => {
-  const res = await api.post('/student/agregar-datos-estudiante', student); 
+  const res = await api.post('/student', student); 
   return res.data;
 };
 
 export const updateStudent = async (id: string, student: Omit<Student, 'id_student'>): Promise<Student> => {
 
-  const res = await api.put(`/student/update/${id}`, student);
+  const res = await api.put(`/student/${id}`, student);
   return res.data;
 };
 
 export const deleteStudent = async (id: string): Promise<void> => {
 
-  await api.delete(`/student/delete/${id}`); 
+  await api.delete(`/student/${id}`); 
 };
 
 export const getStudentGrades = async () => {

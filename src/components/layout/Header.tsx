@@ -50,7 +50,7 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
         <div className="flex items-center space-x-3">
           <UserIcon className="h-5 w-5 text-gray-500" />
           <div>
-            <p className="text-sm font-medium text-gray-800">{user?.user_name}</p> {/* Changed to user_name */}
+            <p className="text-sm font-medium text-gray-800">{user?.username}</p> {/* Changed to user_name */}
             <p className="text-xs text-gray-500 truncate">{roleName(user?.user_role)}</p>
           </div>
         </div>

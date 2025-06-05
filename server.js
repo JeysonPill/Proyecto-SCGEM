@@ -86,6 +86,58 @@ app.post('/login', (req, res) => {
   });
 
   ///////////////////////////////////////////////////////       ESTUDIANTES       ////////////////////////////////////////////////////////////////////////////////
+// Estudiantes
+// Rutas de Estudiantes
+app.get('/students', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN, ROLES.STUDENT]), (req, res) => {
+  const query = 'SELECT * FROM ALUMNOS'; // <-- ¡VERIFICA ESTE NOMBRE DE TABLA!
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error al obtener estudiantes:", err);
+      return res.status(500).json({ message: 'Error al obtener estudiantes.', error: err.message });
+    }
+    res.json(results);
+  });
+});
+app.post('/students', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN]), (req, res) => {
+  const { user_name, matricula, carrera, email, user_role, password } = req.body;
+  const query = 'INSERT INTO ALUMNOS (user_name, matricula, carrera, email, user_role, password) VALUES (?, ?, ?, ?, ?, ?)';
+  db.query(query, [user_name, matricula, carrera, email, user_role, password], (err, results) => {
+    if (err) {
+      console.error("Error al crear estudiante:", err);
+      return res.status(500).json({ message: 'Error al crear estudiante.' });
+    }
+    res.status(201).json({ message: 'Estudiante creado con éxito', id: results.insertId });
+  });
+});
+app.put('/students/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN]), (req, res) => {
+  const { id } = req.params;
+  const { user_name, matricula, carrera, email, user_role, password } = req.body;
+  const query = 'UPDATE ALUMNOS SET user_name = ?, matricula = ?, carrera = ?, email = ?, user_role = ?, password = ? WHERE id_student = ?';
+  db.query(query, [user_name, matricula, carrera, email, user_role, password, id], (err, results) => {
+    if (err) {
+      console.error("Error al actualizar estudiante:", err);
+      return res.status(500).json({ message: 'Error al actualizar estudiante.' });
+    }
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'Estudiante no encontrado.' });
+    }
+    res.json({ message: 'Estudiante actualizado con éxito' });
+  });
+});
+app.delete('/students/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN]), (req, res) => {
+  const { id } = req.params;
+  const query = 'DELETE FROM ALUMNOS WHERE id_student = ?';
+  db.query(query, [id], (err, results) => {
+    if (err) {
+      console.error("Error al eliminar estudiante:", err);
+      return res.status(500).json({ message: 'Error al eliminar estudiante.' });
+    }
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'Estudiante no encontrado.' });
+    }
+    res.json({ message: 'Estudiante eliminado con éxito' });
+  });
+});
 
   /////////////////       MATERIAS       ////////////////////////////////////////////
   app.get('/student/tabla-datos-estudiante/', authenticateToken, (req, res) => {
@@ -115,91 +167,29 @@ WHERE ALUMNOS.matricula = ?;
     });
   });
 
-  /////////////////       ESTUDIANTES       ///////////////////////////////////////
-  // Añadir nuevo estudiante
-  app.post('/student/agregar-datos-estudiante', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN]), (req, res) => {
-    const { matricula, carrera, semestre, user_name, celular, email } = req.body;
-    if (!matricula || !carrera || !semestre || !user_name || !celular || !email) {
-      return res.status(400).json({ message: 'Todos los campos del estudiante son requeridos.' });
+  /////////////////       MATERIAS       ////////////////////////////////////////////
+  app.get('/subjects', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN, ROLES.STUDENT, ROLES.PROFESSOR]), (req, res) => {
+  const query = 'SELECT * FROM MATERIAS'; // Asume que tu tabla es MATERIAS
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching subjects:", err);
+      return res.status(500).json({ message: 'Error fetching subjects.' });
     }
-    const query = `
-    INSERT INTO ALUMNOS (matricula, carrera, semestre, user_name, celular, email)
-    VALUES (?, ?, ?, ?, ?, ?);
-  `;
-    const values = [matricula, carrera, semestre, user_name, celular, email];
-
-    db.query(query, values, (err, result) => {
-      if (err) {
-        console.error("Error al crear estudiante:", err);
-        // Manejo específico para el error de entrada duplicada (si 'matricula' es una clave única)
-        if (err.code === 'ER_DUP_ENTRY') {
-          return res.status(409).json({ message: 'Ya existe un estudiante con esta matrícula.' });
-        }
-        return res.status(500).json({ message: 'Error en la base de datos al crear el estudiante.' });
-      }
-      res.status(201).json({
-        message: 'Estudiante creado exitosamente.',
-        student: { matricula, carrera, semestre, user_name, celular, email } // Puedes añadir result.insertId si aplica
-      });
-    });
+    res.json(results);
   });
+});
 
-  // Actualizar estudiante
-  app.put('/student/update/', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN]), (req, res) => {
-    const studentId = req.params.id;
-    const { matricula, carrera, semestre, user_name, celular, email } = req.body;
-
-    if (!matricula || !carrera || !semestre || !user_name || !celular || !email) {
-      return res.status(400).json({ message: 'Todos los campos del estudiante son requeridos para la actualización.' });
+/////////////////////Horarios
+app.get('/schedules', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN, ROLES.STUDENT, ROLES.PROFESSOR]), (req, res) => {
+  const query = 'SELECT * FROM HORARIOS'; // Asume que tu tabla es HORARIOS
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching schedules:", err);
+      return res.status(500).json({ message: 'Error fetching schedules.' });
     }
-    const query = `
-    UPDATE ALUMNOS
-    SET matricula = ?, carrera = ?, semestre = ?, user_name = ?, celular = ?, email = ?
-    WHERE matricula = ?;
-  `;
-    const values = [matricula, carrera, semestre, user_name, celular, email, studentId];
-
-    db.query(query, values, (err, result) => {
-      if (err) {
-        console.error("Error al actualizar estudiante:", err);
-        // Manejo específico para el error de entrada duplicada si la nueva matricula ya existe
-        if (err.code === 'ER_DUP_ENTRY') {
-          return res.status(409).json({ message: 'La nueva matrícula ya está en uso por otro estudiante.' });
-        }
-        return res.status(500).json({ message: 'Error en la base de datos al actualizar el estudiante.' });
-      }
-
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: 'Estudiante no encontrado.' });
-      }
-
-      res.json({
-        message: 'Estudiante actualizado exitosamente.',
-        student: { matricula, carrera, semestre, user_name, celular, email } // Devuelve los datos actualizados
-      });
-    });
+    res.json(results);
   });
-
-  // Eliminar estudiante
-  app.delete('/student/delete/', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN]), (req, res) => {
-    const studentId = req.params.id;
-    const query = `
-    DELETE FROM ALUMNOS
-    WHERE matricula = ?;
-  `;
-    const values = [studentId];
-    db.query(query, values, (err, result) => {
-      if (err) {
-        console.error("Error al eliminar estudiante:", err);
-        return res.status(500).json({ message: 'Error en la base de datos al eliminar el estudiante.' });
-      }
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: 'Estudiante no encontrado.' });
-      }
-      res.json({ message: 'Estudiante eliminado exitosamente.' });
-    });
-  });
-
+});
 
   /////////////////       KARDEZ       ///////////////////////////////////////
   app.get('/student/tabla-kardex', authenticateToken, (req, res) => {
@@ -274,42 +264,61 @@ WHERE c.matricula = 'A0001';
 
 
 
-
-
-
-
-
-
+// Rutas de Profesores
+app.get('/professors', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN, ROLES.PROFESSOR]), (req, res) => {
+  const query = 'SELECT * FROM PROFESORES'; 
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error al obtener profesores:", err);
+      return res.status(500).json({ message: 'Error al obtener profesores.', error: err.message });
+    }
+    res.json(results);
+  });
+});
+app.post('/professors', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN]), (req, res) => {
+  const { nombre, email, user_role, password } = req.body;
+  const query = 'INSERT INTO PROFESORES (nombre, email, user_role, password) VALUES (?, ?, ?, ?)';
+  db.query(query, [nombre, email, user_role, password], (err, results) => {
+    if (err) {
+      console.error("Error al crear profesor:", err);
+      return res.status(500).json({ message: 'Error al crear profesor.' });
+    }
+    res.status(201).json({ message: 'Profesor creado con éxito', id: results.insertId });
+  });
+});
+app.put('/professors/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN]), (req, res) => {
+  const { id } = req.params;
+  const { nombre, email, user_role, password } = req.body;
+  const query = 'UPDATE PROFESORES SET nombre = ?, email = ?, user_role = ?, password = ? WHERE id_profesor = ?';
+  db.query(query, [nombre, email, user_role, password, id], (err, results) => {
+    if (err) {
+      console.error("Error al actualizar profesor:", err);
+      return res.status(500).json({ message: 'Error al actualizar profesor.' });
+    }
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'Profesor no encontrado.' });
+    }
+    res.json({ message: 'Profesor actualizado con éxito' });
+  });
+});
+app.delete('/professors/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN]), (req, res) => {
+  const { id } = req.params;
+  const query = 'DELETE FROM PROFESORES WHERE id_profesor = ?';
+  db.query(query, [id], (err, results) => {
+    if (err) {
+      console.error("Error al eliminar profesor:", err);
+      return res.status(500).json({ message: 'Error al eliminar profesor.' });
+    }
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'Profesor no encontrado.' });
+    }
+    res.json({ message: 'Profesor eliminado con éxito' });
+  });
+});
 
   ///////////////////////////////////////////////////////       PROFESORES       ////////////////////////////////////////////////////////////////////////////////
+///////////////////////       PROFESORES DATOS      ///////////////////////////////////////
 
-  /*
-  app.get('/professor/schedule/', authenticateToken, (req, res) => {
-    const query = `
-     SELECT 
-      MATERIAS.materia_nombre AS materia_nombre,
-      GRUPOSALUM.id_grupo,
-      CONCAT(
-          'Lunes: ', TIME_FORMAT(HORARIOS.h_lunes, '%H:%i'), '\n',
-          'Martes: ', TIME_FORMAT(HORARIOS.h_martes, '%H:%i'), '\n',
-          'Miércoles: ', TIME_FORMAT(HORARIOS.h_miercoles, '%H:%i'), '\n',
-          'Jueves: ', TIME_FORMAT(HORARIOS.h_jueves, '%H:%i'), '\n',
-          'Viernes: ', TIME_FORMAT(HORARIOS.h_viernes, '%H:%i')
-      ) AS horarios
-  FROM MATERIAS
-  JOIN PROFESORES
-  JOIN HORARIOS ON MATERIAS.id_materia = HORARIOS.id_materia
-  JOIN GRUPOSALUM ON GRUPOSALUM.id_materia = MATERIAS.id_materia
-  WHERE PROFESORES.id_profesor = 'P0001';
-    `;
-    console.log("matre",req.user.user_matricula);
-    db.query(query, [req.user.user_matricula], (err, results) => {
-      if (err) return res.status(500).json({ message: 'Database error' });
-      console.log(results);
-      res.json(results);
-    });
-  });
-  */
   app.get('/professor/schedule/', authenticateToken, (req, res) => {
     const query = `
     SELECT 
