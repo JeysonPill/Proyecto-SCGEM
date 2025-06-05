@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as api from '../services/api';
+import { useAuth } from './AuthContext';
 
 // Tipos
 export type Student = {
@@ -66,14 +67,14 @@ type DataContextType = {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
   const [professors, setProfessors] = useState<Professor[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
 
-
-
   const addProfessor = async (id_professor: Omit<Professor, 'id_profesor'>) => {
+    if (!isAuthenticated) return;
     try {
       const newProfessor = await api.createProfessor(id_professor);
       setProfessors(prev => [...prev, newProfessor]);
@@ -81,7 +82,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error al agregar profesor', error);
     }
   };
+
   const updateProfessor = async (id_profesor: string, professor: Omit<Professor, 'id_profesor'>) => {
+    if (!isAuthenticated) return;
     try {
       const updatedProfessor = await api.updateProfessor(id_profesor, professor);
       setProfessors(prev => prev.map(p => (p.id_profesor === id_profesor ? updatedProfessor : p)));
@@ -89,7 +92,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error al actualizar profesor', error);
     }
   }
+
   const addStudent = async (student: Omit<Student, 'id_student'>) => {
+    if (!isAuthenticated) return;
     try {
       const newStudent = await api.createStudent(student);
       setStudents(prev => [...prev, newStudent]);
@@ -99,6 +104,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateStudent = async (id_student: string, student: Omit<Student, 'id_student'>) => {
+    if (!isAuthenticated) return;
     try {
       const updatedStudent = await api.updateStudent(id_student, student);
       setStudents(prev => prev.map(s => (s.id_student === id_student ? updatedStudent : s)));
@@ -106,7 +112,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error al actualizar estudiante', error);
     }
   }
+
   const fetchProfessors = async () => {
+    if (!isAuthenticated) return;
     try {
       const data = await api.getProfessorSubjects();
       setProfessors(data);
@@ -116,6 +124,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const fetchStudents = async () => {
+    if (!isAuthenticated) return;
     try {
       const data = await api.getStudents();
       setStudents(data);
@@ -125,6 +134,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const fetchSubjects = async () => {
+    if (!isAuthenticated) return;
     try {
       const data = await api.getAllSubjects(); 
       setSubjects(data);
@@ -133,8 +143,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-
   const deleteProfessor = async (id: string) => {
+    if (!isAuthenticated) return;
     try {
       await api.deleteProfessor(id);
       setProfessors(prev => prev.filter(p => p.id_profesor !== id));
@@ -144,6 +154,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteSubject = async (id: string) => {
+    if (!isAuthenticated) return;
     try {
       await api.deleteSubject(id);
       setSubjects(prev => prev.filter(p => p.id_materia !== id));
@@ -151,7 +162,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error al borrar profesor', error);
     }
   };
+
   const deleteStudent = async (id: string) => {
+    if (!isAuthenticated) return;
     try {
       await api.deleteStudent(id);
       setStudents(prev => prev.filter(p => p.id_student !== id));
@@ -160,8 +173,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Add Subject
   const addSubject = async (subject: Omit<Subject, 'id_materia'>) => {
+    if (!isAuthenticated) return;
     try {
       const newSubject = await api.createSubject(subject);
       setSubjects(prev => [...prev, newSubject]);
@@ -170,8 +183,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Update Subject
   const updateSubject = async (id_materia: string, subject: Omit<Subject, 'id_materia'>) => {
+    if (!isAuthenticated) return;
     try {
       const updatedSubject = await api.updateSubject(id_materia, subject);
       setSubjects(prev => prev.map(s => (s.id_materia === id_materia ? updatedSubject : s)));
@@ -180,8 +193,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Fetch Schedules
   const fetchSchedules = async () => {
+    if (!isAuthenticated) return;
     try {
       const data = await api.getSchedules();
       setSchedules(data);
@@ -191,11 +204,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    fetchProfessors();
-    fetchStudents();
-    fetchSubjects();
-    fetchSchedules();
-  }, []);
+    if (isAuthenticated) {
+      fetchProfessors();
+      fetchStudents();
+      fetchSubjects();
+      fetchSchedules();
+    }
+  }, [isAuthenticated]);
 
   return (
     <DataContext.Provider
