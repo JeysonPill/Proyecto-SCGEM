@@ -18,8 +18,6 @@ const db = mysql.createConnection({
   database: 'SCGEM',
 });
 
-
-
 // Role constants
 const ROLES = {
   STUDENT: '1',
@@ -33,13 +31,11 @@ const authenticateToken = (req, res, next) => {
   const token = req.headers['authorization']?.split(' ')[1];
   if (!token) return res.status(401).json({ message: 'Authentication required' });
 
-
   jwt.verify(token, 'aVeryStrongSecretKeyHere', (err, user) => {
     if (err) return res.status(403).json({ message: 'Invalid token' });
     req.user = user;
     next();
   });
-
 };
 
 const checkRole = (roles) => {
@@ -51,7 +47,6 @@ const checkRole = (roles) => {
   };
 };
 
-
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
@@ -59,7 +54,6 @@ app.post('/login', (req, res) => {
     if (err) return res.status(500).json({ message: 'Database error' });
 
     if (result.length === 0 || result[0].password !== password) return res.status(401).json({ message: 'Invalid credentials' });
-
 
     const user = result[0];
     const token = jwt.sign(
@@ -88,7 +82,7 @@ app.post('/login', (req, res) => {
 // Estudiantes
 // Rutas de Estudiantes
 app.get('/students', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN, ROLES.STUDENT]), (req, res) => {
-  const query = 'SELECT * FROM ALUMNOS'; // <-- ¡VERIFICA ESTE NOMBRE DE TABLA!
+  const query = 'SELECT * FROM ALUMNOS';
   db.query(query, (err, results) => {
     if (err) {
       console.error("Error al obtener estudiantes:", err);
@@ -97,6 +91,7 @@ app.get('/students', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPE
     res.json(results);
   });
 });
+
 app.post('/students', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN]), (req, res) => {
   const { user_name, matricula, carrera, email, user_role, password } = req.body;
   const query = 'INSERT INTO ALUMNOS (user_name, matricula, carrera, email, user_role, password) VALUES (?, ?, ?, ?, ?, ?)';
@@ -108,6 +103,7 @@ app.post('/students', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUP
     res.status(201).json({ message: 'Estudiante creado con éxito', id: results.insertId });
   });
 });
+
 app.put('/students/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN]), (req, res) => {
   const { id } = req.params;
   const { user_name, matricula, carrera, email, user_role, password } = req.body;
@@ -123,6 +119,7 @@ app.put('/students/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.
     res.json({ message: 'Estudiante actualizado con éxito' });
   });
 });
+
 app.delete('/students/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN]), (req, res) => {
   const { id } = req.params;
   const query = 'DELETE FROM ALUMNOS WHERE id_student = ?';
@@ -138,7 +135,41 @@ app.delete('/students/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROL
   });
 });
 
-/////////////////       MATERIAS       ////////////////////////////////////////////
+app.get('/schedules', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN, ROLES.STUDENT, ROLES.PROFESSOR]), (req, res) => {
+  const query = `
+    SELECT 
+      CONCAT(id_materia, '-', id_grupo, '-', id_profesor) as id,
+      id_materia,
+      id_grupo,
+      id_profesor,
+      h_lunes,
+      h_martes,
+      h_miercoles,
+      h_jueves,
+      h_viernes
+    FROM HORARIOS
+  `;
+  
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching schedules:", err);
+      return res.status(500).json({ message: 'Error fetching schedules.' });
+    }
+    res.json(results);
+  });
+});
+
+app.get('/subjects', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN, ROLES.STUDENT, ROLES.PROFESSOR]), (req, res) => {
+  const query = 'SELECT * FROM MATERIAS';
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching subjects:", err);
+      return res.status(500).json({ message: 'Error fetching subjects.' });
+    }
+    res.json(results);
+  });
+});
+
 app.get('/student/tabla-datos-estudiante/', authenticateToken, (req, res) => {
   const query = `
     SELECT 
@@ -166,31 +197,6 @@ WHERE ALUMNOS.matricula = ?;
   });
 });
 
-/////////////////       MATERIAS       ////////////////////////////////////////////
-app.get('/subjects', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN, ROLES.STUDENT, ROLES.PROFESSOR]), (req, res) => {
-  const query = 'SELECT * FROM MATERIAS'; // Asume que tu tabla es MATERIAS
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error("Error fetching subjects:", err);
-      return res.status(500).json({ message: 'Error fetching subjects.' });
-    }
-    res.json(results);
-  });
-});
-
-/////////////////////Horarios
-app.get('/schedules', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN, ROLES.STUDENT, ROLES.PROFESSOR]), (req, res) => {
-  const query = 'SELECT * FROM HORARIOS'; // Asume que tu tabla es HORARIOS
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error("Error fetching schedules:", err);
-      return res.status(500).json({ message: 'Error fetching schedules.' });
-    }
-    res.json(results);
-  });
-});
-
-/////////////////       KARDEZ       ///////////////////////////////////////
 app.get('/student/tabla-kardex', authenticateToken, (req, res) => {
   const query = `
  SELECT 
@@ -212,11 +218,11 @@ WHERE c.matricula = ?;
     res.json(results);
   });
 });
-/////////////////       PAGOS       ///////////////////////////////////////
+
 app.get('/student/tabla-pagos', authenticateToken, (req, res) => {
   const query = `
     SELECT 
-    DATE_FORMAT(p.fecha_vencimiento, '%M') AS MES,  -- Extracts month name
+    DATE_FORMAT(p.fecha_vencimiento, '%M') AS MES,
     p.pago_mensual AS CANTIDAD,
     p.fecha_vencimiento AS FECHA_CORTE,
     CASE 
@@ -229,7 +235,6 @@ app.get('/student/tabla-pagos', authenticateToken, (req, res) => {
         WHEN p.fecha_pago IS NULL THEN 'Por pagar'
         ELSE 'Pagado'
     END AS ACCION
-
   FROM PAGOS p
   JOIN ALUMNOS on ALUMNOS.matricula = p.matricula
   where ALUMNOS.matricula = ?;
@@ -241,8 +246,6 @@ app.get('/student/tabla-pagos', authenticateToken, (req, res) => {
   });
 });
 
-
-/////////////////       ASISTENCIAS       ///////////////////////////////////////
 app.post('/student/registro-asistencias', authenticateToken, (req, res) => {
   const { codigo_asistencia } = req.body;
   const user_matricula = req.user.user_matricula;
@@ -259,10 +262,6 @@ app.post('/student/registro-asistencias', authenticateToken, (req, res) => {
   });
 });
 
-///////////////////////////////////////////////////////    FIN   ESTUDIANTES       ////////////////////////////////////////////////////////////////////////////////
-
-
-
 // Rutas de Profesores
 app.get('/professors', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN, ROLES.PROFESSOR]), (req, res) => {
   const query = 'SELECT * FROM PROFESORES';
@@ -274,6 +273,7 @@ app.get('/professors', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SU
     res.json(results);
   });
 });
+
 app.post('/professors', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN]), (req, res) => {
   const { nombre, email, user_role, password } = req.body;
   const query = 'INSERT INTO PROFESORES (nombre, email, user_role, password) VALUES (?, ?, ?, ?)';
@@ -285,6 +285,7 @@ app.post('/professors', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.S
     res.status(201).json({ message: 'Profesor creado con éxito', id: results.insertId });
   });
 });
+
 app.put('/professors/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN]), (req, res) => {
   const { id } = req.params;
   const { nombre, email, user_role, password } = req.body;
@@ -300,6 +301,7 @@ app.put('/professors/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLE
     res.json({ message: 'Profesor actualizado con éxito' });
   });
 });
+
 app.delete('/professors/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, ROLES.SUPER_ADMIN]), (req, res) => {
   const { id } = req.params;
   const query = 'DELETE FROM PROFESORES WHERE id_profesor = ?';
@@ -314,9 +316,6 @@ app.delete('/professors/:id', authenticateToken, checkRole([ROLES.ADMIN_STAFF, R
     res.json({ message: 'Profesor eliminado con éxito' });
   });
 });
-
-///////////////////////////////////////////////////////       PROFESORES       ////////////////////////////////////////////////////////////////////////////////
-///////////////////////       PROFESORES DATOS      ///////////////////////////////////////
 
 app.get('/professor/schedule/', authenticateToken, (req, res) => {
   const query = `
@@ -342,12 +341,6 @@ app.get('/professor/schedule/', authenticateToken, (req, res) => {
   });
 });
 
-
-
-//////////////////////////////////////////////////////// QR ASISTENCIA //////////////////////////////////////////////////////////////////
-
-
-
 app.get('/professor/QR_CODE_GEN/', authenticateToken, (req, res) => {
   const query = `
     SELECT 
@@ -361,26 +354,16 @@ app.get('/professor/QR_CODE_GEN/', authenticateToken, (req, res) => {
     WHERE PROFESORES.id_profesor = ?;
   `;
 
-
-
   console.log("matricula del profesor:", req.user.user_matricula);
 
   db.query(query, [req.user.user_matricula], (err, results) => {
     if (err) return res.status(500).json({ message: 'Database error' });
     console.log(results);
-    res.json(results);  // Return the query results
+    res.json(results);
   });
 });
 
-
-
-//////////////
-///////////////////       CALIFICAICONES /////////////////////////
-
-
-
 app.get('/professor/getSubjects', authenticateToken, (req, res) => {
-
   const query = `
       SELECT DISTINCT
       MATERIAS.materia_nombre
@@ -395,11 +378,9 @@ app.get('/professor/getSubjects', authenticateToken, (req, res) => {
   db.query(query, [req.user.user_matricula], (err, results) => {
     if (err) return res.status(500).json({ message: 'Database error' });
     console.log(results);
-    res.json(results);  // Return the query results
+    res.json(results);
   });
 });
-
-
 
 app.get('/professor/getStudents', async (req, res) => {
   let { subjectId } = req.query;
@@ -409,16 +390,14 @@ app.get('/professor/getStudents', async (req, res) => {
 FROM ALUMNOS A
 JOIN GRUPOSALUM G ON A.matricula = G.matricula_alumno
 LEFT JOIN CALIFICACIONES C ON A.matricula = C.matricula AND G.id_materia = C.id_materia
-WHERE G.id_materia = /;
-
+WHERE G.id_materia = ?;
       `;
   db.query(query, [subjectId], (err, results) => {
     if (err) return res.status(500).json({ message: 'Database error' });
     console.log(results);
-    res.json(results);  // Return the query results
-  })
+    res.json(results);
+  });
 });
-
 
 app.post('/professor/insertGrade', async (req, res) => {
   let { id_materia, matricula, calif_p1, calif_p2, calif_final, ciclo_cursando } = req.body;
@@ -451,7 +430,6 @@ app.post('/professor/insertGrade', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
