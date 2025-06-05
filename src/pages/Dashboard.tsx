@@ -2,7 +2,7 @@ import React from 'react';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import Card from '../components/ui/Card';
-import { Users, BookOpen, UserCheck, Calendar, QrCode } from 'lucide-react';
+import { Users, BookOpen, UserCheck, Calendar, QrCode, ClipboardList, Wallet, GraduationCap } from 'lucide-react'; // Added new icons
 import { Link } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
@@ -20,19 +20,51 @@ const Dashboard: React.FC = () => {
     stats.push(
       {
         title: 'Materias',
-        value: subjects.length,
+        value: subjects.length, // This should ideally be 'enrolledSubjects.length' if you fetch student-specific enrolled subjects
         icon: <BookOpen className="h-8 w-8 text-emerald-500" />,
         description: 'Materias inscritas',
-        link: '/subjects',
+        link: '/student/subjects', // Specific student link
         color: 'bg-emerald-50',
       },
       {
         title: 'Horarios',
-        value: schedules.length,
+        value: schedules.length, // This should ideally be 'studentSchedules.length'
         icon: <Calendar className="h-8 w-8 text-amber-500" />,
         description: 'Horario de clases',
-        link: '/schedules',
+        link: '/student/schedules', // Specific student link
         color: 'bg-amber-50',
+      },
+      {
+        title: 'Calificaciones',
+        value: '-', // Value depends on fetching specific data
+        icon: <GraduationCap className="h-8 w-8 text-indigo-500" />,
+        description: 'Ver mis calificaciones',
+        link: '/student/grades', // New student link
+        color: 'bg-indigo-50',
+      },
+      {
+        title: 'Kardex',
+        value: '-', // Value depends on fetching specific data
+        icon: <ClipboardList className="h-8 w-8 text-fuchsia-500" />,
+        description: 'Historial académico',
+        link: '/student/kardex', // New student link
+        color: 'bg-fuchsia-50',
+      },
+      {
+        title: 'Pagos',
+        value: '-', // Value depends on fetching specific data
+        icon: <Wallet className="h-8 w-8 text-green-500" />,
+        description: 'Estado de mis pagos',
+        link: '/student/payments', // New student link
+        color: 'bg-green-50',
+      },
+      {
+        title: 'Asistencia',
+        value: '-', // Value depends on fetching specific data
+        icon: <QrCode className="h-8 w-8 text-rose-500" />,
+        description: 'Registrar asistencia',
+        link: '/student/attendance', // New student link
+        color: 'bg-rose-50',
       }
     );
   }
@@ -41,33 +73,34 @@ const Dashboard: React.FC = () => {
   if (canSee('2', '99')) {
     stats.push(
       {
-        title: 'Materias impartidas',
-        value: subjects.length,
+        title: 'Horario de Clases', // Renamed for clarity for professors
+        value: subjects.length, // This should ideally be 'professorSubjects.length'
         icon: <BookOpen className="h-8 w-8 text-purple-500" />,
         description: 'Clases asignadas',
-        link: '/subjects',
+        link: '/professor/schedule', // Specific professor link
         color: 'bg-purple-50',
-      },
-      {
-        title: 'Horarios',
-        value: schedules.length,
-        icon: <Calendar className="h-8 w-8 text-blue-500" />,
-        description: 'Horario de clases',
-        link: '/schedules',
-        color: 'bg-blue-50',
       },
       {
         title: 'Generar QR',
         value: '-',
         icon: <QrCode className="h-8 w-8 text-pink-500" />,
         description: 'QR de asistencia',
-        link: '/professors',
+        link: '/professor/attendance-qr', // Specific professor link
         color: 'bg-pink-50',
+      },
+      {
+        title: 'Ingresar Calificaciones',
+        value: '-',
+        icon: <ClipboardList className="h-8 w-8 text-teal-500" />,
+        description: 'Registro de calificaciones',
+        link: '/professor/grade-entry', // New professor link
+        color: 'bg-teal-50',
       }
+      // Removed redundant 'Horarios' for professors as it's covered by 'Horario de Clases'
     );
   }
 
-  // Admin o Superadmin
+  // Admin o Superadmin (existing links are generally fine for administrative oversight)
   if (canSee('3', '99')) {
     stats.push(
       {
@@ -139,11 +172,11 @@ const Dashboard: React.FC = () => {
           <Card title="Estudiantes recientes">
             <ul className="divide-y divide-gray-200">
               {students.slice(0, 3).map((student) => (
-                <li key={student.id} className="py-3">
+                <li key={student.id_student} className="py-3"> {/* Changed to id_student */}
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
                       <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <span className="text-blue-700 font-medium">{student.user_name}</span>
+                        <span className="text-blue-700 font-medium">{student.user_name.charAt(0)}</span> {/* Show first letter of name */}
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -172,7 +205,7 @@ const Dashboard: React.FC = () => {
                 const subject = subjects.find(s => s.id_materia === schedule.id_materia);
                 const professor = professors.find(p => p.id_profesor === schedule.id_profesor);
                 return (
-                  <li key={schedule.id_materia} className="py-3">
+                  <li key={schedule.id_grupo} className="py-3"> {/* Changed key to id_grupo, assuming unique per schedule entry */}
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
                         <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">

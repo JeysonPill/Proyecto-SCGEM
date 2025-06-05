@@ -63,10 +63,11 @@ const LoginPage: React.FC = () => {
             <Button
               type="submit"
               fullWidth
-              isLoading={isLoading}
+              disabled={isLoading}
             >
-              Sign in
+              {isLoading ? 'Logging in...' : 'Login'}
             </Button>
+            {error && <p className="mt-2 text-sm text-red-600 text-center">{error}</p>}
           </form>
         </Card>
       </div>

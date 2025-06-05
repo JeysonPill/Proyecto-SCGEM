@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { useState, ReactNode } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
-const Layout: React.FC = () => {
+
+
+interface LayoutProps {
+  children: ReactNode; 
+}
+
+
+const Layout: React.FC<LayoutProps> = ({ children }) => { // Desestructura 'children'
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -15,7 +21,7 @@ const Layout: React.FC = () => {
         
         <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50">
           <div className="max-w-7xl mx-auto">
-            <Outlet />
+            {children} {/* Renderiza los hijos pasados al Layout */}
           </div>
         </main>
       </div>
