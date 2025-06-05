@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { Student, Subject, Professor, Schedule } from '../context/DataContext';
 
-const API_URL = 'http://192.168.4.241:3000';
+const API_URL = 'http://192.168.100.83:3000';
 
 const api = axios.create({
   baseURL: API_URL,

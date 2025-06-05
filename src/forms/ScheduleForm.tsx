@@ -46,15 +46,15 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ schedule, onClose, mode }) 
     const newErrors: { [key: string]: string } = {};
     
     if (!formData.id_materia) {
-      newErrors.id_materia = 'Subject is required';
+      newErrors.id_materia = 'Materia es requerida';
     }
     
     if (!formData.id_grupo) {
-      newErrors.id_grupo = 'Group is required';
+      newErrors.id_grupo = 'Grupo es requerido';
     }
     
     if (!formData.id_profesor) {
-      newErrors.id_profesor = 'Professor is required';
+      newErrors.id_profesor = 'Profesor es requerido';
     }
     
     // Validate that at least one day has a schedule
@@ -102,7 +102,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ schedule, onClose, mode }) 
   };
 
   const subjectOptions = subjects.map(subject => ({
-    value: subject.id,
+    value: subject.id_materia,
     label: subject.materia_nombre,
   }));
 
@@ -115,7 +115,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ schedule, onClose, mode }) 
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Select
-          label="Subject"
+          label="Materia"
           name="id_materia"
           value={formData.id_materia}
           onChange={(value) => {
@@ -135,17 +135,17 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ schedule, onClose, mode }) 
         />
         
         <Input
-          label="Group"
+          label="Grupo"
           name="id_grupo"
           value={formData.id_grupo}
           onChange={handleChange}
-          placeholder="Enter group (e.g. A1, B2)"
+          placeholder="Ingresa grupo (e.g. A1, B2)"
           error={errors.id_grupo}
         />
       </div>
       
       <Select
-        label="Professor"
+        label="Profesor"
         name="id_profesor"
         value={formData.id_profesor}
         onChange={(value) => {
@@ -170,7 +170,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ schedule, onClose, mode }) 
         
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Input
-            label="Monday"
+            label="Lunes"
             name="h_lunes"
             value={formData.h_lunes}
             onChange={handleChange}
@@ -179,7 +179,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ schedule, onClose, mode }) 
           />
           
           <Input
-            label="Tuesday"
+            label="Martes"
             name="h_martes"
             value={formData.h_martes}
             onChange={handleChange}
@@ -188,7 +188,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ schedule, onClose, mode }) 
           />
           
           <Input
-            label="Wednesday"
+            label="Miercoles"
             name="h_miercoles"
             value={formData.h_miercoles}
             onChange={handleChange}
@@ -197,7 +197,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ schedule, onClose, mode }) 
           />
           
           <Input
-            label="Thursday"
+            label="Jueves"
             name="h_jueves"
             value={formData.h_jueves}
             onChange={handleChange}
@@ -206,7 +206,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ schedule, onClose, mode }) 
           />
           
           <Input
-            label="Friday"
+            label="Viernes"
             name="h_viernes"
             value={formData.h_viernes}
             onChange={handleChange}
@@ -225,7 +225,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ schedule, onClose, mode }) 
           Cancel
         </Button>
         <Button type="submit">
-          {mode === 'add' ? 'Add Schedule' : 'Update Schedule'}
+          {mode === 'add' ? 'Añadir horario' : 'Actualizar horario'}
         </Button>
       </div>
     </form>

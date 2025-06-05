@@ -40,17 +40,17 @@ const ProfessorForm: React.FC<ProfessorFormProps> = ({ professor, onClose, mode 
     const newErrors: { [key: string]: string } = {};
     
     if (!formData.nombre) {
-      newErrors.nombre = 'Name is required';
+      newErrors.nombre = 'Nombnre es requerido';
     }
     
     if (!formData.celular) {
-      newErrors.celular = 'Phone number is required';
+      newErrors.celular = 'Número de celular es requerido';
     }
     
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = 'Email es inválido';
     }
     
     setErrors(newErrors);
@@ -76,7 +76,7 @@ const ProfessorForm: React.FC<ProfessorFormProps> = ({ professor, onClose, mode 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input
-        label="Full Name"
+        label="Nombre Completo"
         name="nombre"
         value={formData.nombre}
         onChange={handleChange}

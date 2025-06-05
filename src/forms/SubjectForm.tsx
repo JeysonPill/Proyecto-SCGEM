@@ -15,7 +15,7 @@ const SubjectForm: React.FC<SubjectFormProps> = ({ subject, onClose, mode }) => 
   const { addSubject, updateSubject } = useData();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   
-  const [formData, setFormData] = useState<Omit<Subject, 'id'>>({
+  const [formData, setFormData] = useState<Omit<Subject, 'id_materia'>>({
     materia_nombre: subject?.materia_nombre || '',
     sem_cursante: subject?.sem_cursante || 1,
   });
@@ -40,7 +40,7 @@ const SubjectForm: React.FC<SubjectFormProps> = ({ subject, onClose, mode }) => 
     const newErrors: { [key: string]: string } = {};
     
     if (!formData.materia_nombre) {
-      newErrors.materia_nombre = 'Subject name is required';
+      newErrors.materia_nombre = 'Nombre de materia es requerida';
     }
     
     setErrors(newErrors);
@@ -57,7 +57,7 @@ const SubjectForm: React.FC<SubjectFormProps> = ({ subject, onClose, mode }) => 
     if (mode === 'add') {
       addSubject(formData as Subject);
     } else if (mode === 'edit' && subject) {
-      updateSubject(subject.id, formData as Subject);
+      updateSubject(subject.id_materia, formData as Subject);
     }
     
     onClose();
@@ -65,22 +65,22 @@ const SubjectForm: React.FC<SubjectFormProps> = ({ subject, onClose, mode }) => 
 
   const semesterOptions = Array.from({ length: 10 }, (_, i) => ({
     value: String(i + 1),
-    label: `${i + 1}° Semester`,
+    label: `${i + 1}° Semestre`,
   }));
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input
-        label="Subject Name"
+        label="Nopmbre de Materia"
         name="materia_nombre"
         value={formData.materia_nombre}
         onChange={handleChange}
-        placeholder="Enter subject name"
+        placeholder="Ingresa nombre de materia"
         error={errors.materia_nombre}
       />
       
       <Select
-        label="Semester"
+        label="Semestre Cursante"
         name="sem_cursante"
         value={String(formData.sem_cursante)}
         onChange={(value) => {
@@ -101,7 +101,7 @@ const SubjectForm: React.FC<SubjectFormProps> = ({ subject, onClose, mode }) => 
           Cancel
         </Button>
         <Button type="submit">
-          {mode === 'add' ? 'Add Subject' : 'Update Subject'}
+          {mode === 'add' ? 'Añadir Materia' : 'Actualizar Materia'}
         </Button>
       </div>
     </form>

@@ -14,7 +14,7 @@ interface StudentFormProps {
 const StudentForm: React.FC<StudentFormProps> = ({ student, onClose, mode }) => {
   const { addStudent, updateStudent } = useData();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  
+
   const [formData, setFormData] = useState<Omit<Student, 'id_student'>>({
     id: student?.id_student || '',
     matricula: student?.matricula || '',
@@ -31,7 +31,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ student, onClose, mode }) => 
       ...formData,
       [name]: name === 'semestre' ? parseInt(value, 10) : value,
     });
-    
+
     // Clear error when field is edited
     if (errors[name]) {
       setErrors({
@@ -43,79 +43,79 @@ const StudentForm: React.FC<StudentFormProps> = ({ student, onClose, mode }) => 
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
-    
+
     if (!formData.matricula) {
-      newErrors.matricula = 'Student ID is required';
+      newErrors.matricula = 'ID estudiante es requerido';
     }
-    
+
     if (!formData.carrera) {
-      newErrors.carrera = 'Program is required';
+      newErrors.carrera = 'Carrera es requerida';
     }
-    
+
     if (!formData.user_name) {
-      newErrors.user_name = 'Name is required';
+      newErrors.user_name = 'Nombre completo es requerido';
     }
-    
+
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Email es requerido';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-    
+
     if (!formData.celular) {
-      newErrors.celular = 'Phone number is required';
+      newErrors.celular = 'Numero de celular es requerido';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     if (mode === 'add') {
       addStudent(formData as Student);
     } else if (mode === 'edit' && student) {
       updateStudent(student.id, formData as Student);
     }
-    
+
     onClose();
   };
 
   const semesterOptions = Array.from({ length: 10 }, (_, i) => ({
     value: String(i + 1),
-    label: `${i + 1}° Semester`,
+    label: `${i + 1}° Semestre`,
   }));
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Input
-          label="Student ID"
+          label="ID Estudiante"
           name="matricula"
           value={formData.matricula}
           onChange={handleChange}
-          placeholder="Enter student ID"
+          placeholder="Ingresa ID estudiante"
           error={errors.matricula}
         />
-        
+
         <Input
-          label="Program/Major"
+          label="Carrera"
           name="carrera"
           value={formData.carrera}
           onChange={handleChange}
-          placeholder="Enter program or major"
+          placeholder="Ingrersa carrera"
           error={errors.carrera}
         />
       </div>
-      
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Select
-          label="Semester"
+          label="Semestre"
           name="semestre"
           value={String(formData.semestre)}
           onChange={(value) => {
@@ -126,38 +126,38 @@ const StudentForm: React.FC<StudentFormProps> = ({ student, onClose, mode }) => 
           }}
           options={semesterOptions}
         />
-        
+
         <Input
-          label="Full Name"
+          label="Nombre Completo"
           name="user_name"
           value={formData.user_name}
           onChange={handleChange}
-          placeholder="Enter full name"
+          placeholder="Ingresa nombre completo"
           error={errors.user_name}
         />
       </div>
-      
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Input
-          label="Phone Number"
+          label="Número de Celular"
           name="celular"
           value={formData.celular}
           onChange={handleChange}
-          placeholder="Enter phone number"
+          placeholder="Ingresa número de celular"
           error={errors.celular}
         />
-        
+
         <Input
           label="Email"
           name="email"
           type="email"
           value={formData.email}
           onChange={handleChange}
-          placeholder="Enter email address"
+          placeholder="Ingresa email"
           error={errors.email}
         />
       </div>
-      
+
       <div className="flex justify-end space-x-3 pt-4">
         <Button
           type="button"
@@ -167,7 +167,7 @@ const StudentForm: React.FC<StudentFormProps> = ({ student, onClose, mode }) => 
           Cancel
         </Button>
         <Button type="submit">
-          {mode === 'add' ? 'Add Student' : 'Update Student'}
+          {mode === 'add' ? 'Añadir Estudiante' : 'Actualizar Estudiante'}
         </Button>
       </div>
     </form>

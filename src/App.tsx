@@ -11,9 +11,21 @@ import { DataProvider } from './context/DataContext';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 
-const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+const PrivateRoute: React.FC<{
+  children: React.ReactNode;
+  allowedRoles?: string[]; // ← permite filtrar por rol
+}> = ({ children, allowedRoles }) => {
+  const { isAuthenticated, user } = useAuth();
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" />;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(user.user_role)) {
+    return <Navigate to="/login" />;
+  }
+
+  return <>{children}</>;
 };
 
 function App() {
@@ -29,8 +41,12 @@ function App() {
                 <PrivateRoute>
                   <Layout />
                 </PrivateRoute>
-              }
-            >
+              }>
+              <Route path="admin" element={
+                <PrivateRoute allowedRoles={['99']}>
+                  <h1>Vista de Super Admin</h1> {/* Reemplaza con tu página real */}
+                </PrivateRoute>
+              } />
               <Route index element={<Dashboard />} />
               <Route path="students" element={<StudentsPage />} />
               <Route path="subjects" element={<SubjectsPage />} />
