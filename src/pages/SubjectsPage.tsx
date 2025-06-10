@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useData } from '../context/DataContext';
+import { useDataContext } from '../context/DataContext';
 import Card from '../components/ui/Card';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
@@ -10,7 +10,7 @@ import { Subject } from '../context/DataContext';
 import Input from '../components/ui/Input';
 
 const SubjectsPage: React.FC = () => {
-  const { subjects, deleteSubject } = useData();
+  const { subjects, deleteSubject } = useDataContext();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

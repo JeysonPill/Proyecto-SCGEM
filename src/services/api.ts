@@ -132,6 +132,7 @@ export const insertGrade = async (data: {
 
 //////////////////////////
 // Las Materias lol
+//////////////////////////
 
 export const getAllSubjects = async (): Promise<Subject[]> => {
   const res = await api.get('/subjects');
@@ -153,12 +154,13 @@ export const deleteSubject = async (id: string): Promise<void> => {
 };
 
 //////////////////////////
-//Materias para ADMIN 
+// Horarios
+//////////////////////////
 
-//export const getAllSchedules = async (): Promise<Schedule[]> => {
-//  const res = await api.get('/schedules');
-//  return res.data;
-//};
+export const getSchedules = async (): Promise<Schedule[]> => {
+  const res = await api.get('/schedules');
+  return res.data;
+};
 
 export const createSchedule = async (schedule: Omit<Schedule, 'id'>): Promise<Schedule> => {
   const res = await api.post('/addSchedules', schedule);
@@ -175,7 +177,3 @@ export const deleteSchedule = async (id: string): Promise<void> => {
 };
 
 export default api;
-
-export function getSchedules() {
-  throw new Error('Function not implemented.');
-}

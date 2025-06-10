@@ -1,12 +1,29 @@
 
 import React from 'react';
-import { useData } from '../context/DataContext';
+import { useDataContext } from '../context/DataContext';
+import type { Professor } from '../context/DataContext';
 import Card from '../components/ui/Card';
 import { Users, BookOpen, UserCheck, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+// Interfaces
+interface Schedule {
+  id_materia: string;
+  id_profesor: string;
+  id_grupo: string | number;
+  // add other properties as needed
+}
+
+interface Subject {
+  id_materia: string;
+  materia_nombre: string;
+  sem_cursante?: string | number;
+  // add other properties as needed
+}
+
+
 const Dashboard: React.FC = () => {
-  const { students, subjects, professors, schedules } = useData();
+  const { subjects, students, professors, schedules } = useDataContext();
 
   const stats = [
     {
@@ -87,31 +104,18 @@ const Dashboard: React.FC = () => {
                     <p className="text-sm font-medium text-gray-900 truncate">{student.user_name}</p>
                     <p className="text-sm text-gray-500 truncate">{student.carrera} - {student.semestre}° Semestre</p>
                   </div>
-                  <div>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {student.matricula}
-                    </span>
-                  </div>
                 </div>
               </li>
             ))}
           </ul>
-          <div className="mt-4">
-            <Link
-              to="/students"
-              className="text-sm font-medium text-blue-600 hover:text-blue-500"
-            >
-              Ver todos los estudiantes
-            </Link>
-          </div>
         </Card>
 
         <Card title="Clases Recientes">
           <ul className="divide-y divide-gray-200">
-            {schedules.slice(0, 3).map((schedule) => {
-              const subject = subjects.find(s => s.id_materia === schedule.id_materia);
-              const professor = professors.find(p => p.id_profesor === schedule.id_profesor);
-              
+            {schedules.slice(0, 3).map((schedule: Schedule) => {
+              const subject: Subject | undefined = subjects?.find((s: Subject) => s.id_materia === schedule.id_materia);
+              const professor: Professor | undefined = professors.find((p: Professor) => p.id_professor === schedule.id_profesor);
+
               return (
                 <li key={schedule.id_materia} className="py-3">
                   <div className="flex items-center space-x-4">
@@ -139,7 +143,7 @@ const Dashboard: React.FC = () => {
                 </li>
               );
             })}
-          </ul>
+            </ul>
           <div className="mt-4">
             <Link
               to="/schedules"

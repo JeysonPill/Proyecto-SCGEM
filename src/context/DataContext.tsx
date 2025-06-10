@@ -1,235 +1,267 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import * as api from '../services/api';
+import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 
-// Tipos
-export type Student = {
-  id: string;
-  id_student: string;
-  matricula: string;
-  carrera: string;
-  semestre: number;
-  user_name: string;
-  celular: string;
-  email: string;
-};
 
-export interface Professor {
-  id_profesor: string;
-  nombre: string;
-  celular: string;
-  email: string;
+export interface Subject {
+    id_materia: string;
+    materia_nombre: string;
+    description: string;
+    sem_cursante: number;
 }
 
 
-export type Subject = {
-  id_materia: string;
-  materia_nombre: string;
-  sem_cursante: number;
+export interface Student {
+    id: string;
+    user_name: string;
+    carrera: string;
+    semestre: number;
+    matricula: string;
+    celular: string;
+    email: string;
+}
+
+
+export interface Professor {
+    id_professor: string;
+    nombre: string;
+    celular: string;
+    email: string;
+
+}
+
+
+export interface Schedule {
+    id_schedule: string;
+    id_materia: string;
+    id_profesor: string;
+    id_grupo: string;
+}
+
+
+interface DataContextProps {
+    subjects: Subject[];
+    students: Student[];
+    professors: Professor[];
+    schedules: Schedule[];
+    loading: boolean;
+    error: string | null;
+
+
+    addSubject: (newSubject: Omit<Subject, 'id_materia'>) => Promise<void>;
+    updateSubject: (updatedSubject: Subject) => Promise<void>;
+    deleteSubject: (id: string) => Promise<void>;
+}
+
+
+const DataContext = createContext<DataContextProps | undefined>(undefined);
+
+
+export const useDataContext = () => {
+    const context = useContext(DataContext);
+    if (!context) {
+        throw new Error('useDataContext debe ser usado dentro de un DataProvider');
+    }
+    return context;
 };
 
-export type Schedule = {
-  id_materia: string;
-  id_grupo: string;
-  id_profesor: string;
-  h_lunes: string;
-  h_martes: string;
-  h_miercoles: string;
-  h_jueves: string;
-  h_viernes: string;
-};
 
-type DataContextType = {
-  professors: any[];
-  students: Student[];
-  subjects: Subject[];
-  schedules: Schedule[];
+export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
-  addProfessor: (professor: Omit<Professor, 'id_profesor'>) => Promise<void>;
-  updateProfessor: (id_profesor: string, professor: Omit<Professor, 'id_profesor'>) => Promise<void>;
-  deleteProfessor: (id_profesor: string) => Promise<void>;
-
-  addStudent: (student: Omit<Student, 'id_student'>) => Promise<void>;
-  updateStudent: (id_student: string, student: Omit<Student, 'id_student'>) => Promise<void>;
-  deleteStudent: (id_student: string) => Promise<void>;
-
-  addSubject: (subject: Omit<Subject, 'id_materia'>) => Promise<void>;
-  updateSubject: (id_materia: string, subject: Omit<Subject, 'id_materia'>) => Promise<void>;
-  deleteSubject: (id_materia: string) => Promise<void>;
+    const [subjects, setSubjects] = useState<Subject[]>([]);
+    const [students, setStudents] = useState<Student[]>([]);
+    const [professors, setProfessors] = useState<Professor[]>([]);
+    const [schedules, setSchedules] = useState<Schedule[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
 
-  fetchProfessors: () => Promise<void>;
-  fetchStudents: () => Promise<void>;
-  fetchSubjects: () => Promise<void>;
-  fetchSchedules: () => Promise<void>;
-};
+    const fetchSubjects = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fetch('/subjects');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data: Subject[] = await response.json();
+            setSubjects(data);
+        } catch (err: any) {
+            console.error("Error fetching subjects:", err);
+            setError(`Failed to fetch subjects: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-const DataContext = createContext<DataContextType | undefined>(undefined);
+    // Obtener Estudiantes
+    const fetchStudents = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fetch('/students');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data: Student[] = await response.json();
+            setStudents(data);
+        } catch (err: any) {
+            console.error("Error fetching students:", err);
+            setError(`Failed to fetch students: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [professors, setProfessors] = useState<Professor[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
+    // Obtener Profesores
+    const fetchProfessors = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fetch('/professors'); // Ajusta la ruta a tu endpoint de profesores
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data: Professor[] = await response.json();
+            setProfessors(data);
+        } catch (err: any) {
+            console.error("Error fetching professors:", err);
+            setError(`Failed to fetch professors: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    // Obtener Horarios
+    const fetchSchedules = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fetch('/schedules'); // Ajusta la ruta a tu endpoint de horarios
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data: Schedule[] = await response.json();
+            setSchedules(data);
+        } catch (err: any) {
+            console.error("Error fetching schedules:", err);
+            setError(`Failed to fetch schedules: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    // useEffect para cargar todas las entidades cuando el componente se monta
+    useEffect(() => {
+        fetchSubjects();
+        fetchStudents();
+        fetchProfessors();
+        fetchSchedules();
+    }, []);
 
-  const addProfessor = async (id_professor: Omit<Professor, 'id_profesor'>) => {
-    try {
-      const newProfessor = await api.createProfessor(id_professor);
-      setProfessors(prev => [...prev, newProfessor]);
-    } catch (error) {
-      console.error('Error al agregar profesor', error);
-    }
-  };
-  const updateProfessor = async (id_profesor: string, professor: Omit<Professor, 'id_profesor'>) => {
-    try {
-      const updatedProfessor = await api.updateProfessor(id_profesor, professor);
-      setProfessors(prev => prev.map(p => (p.id_profesor === id_profesor ? updatedProfessor : p)));
-    } catch (error) {
-      console.error('Error al actualizar profesor', error);
-    }
-  }
-  const addStudent = async (student: Omit<Student, 'id_student'>) => {
-    try {
-      const newStudent = await api.createStudent(student);
-      setStudents(prev => [...prev, newStudent]);
-    } catch (error) {
-      console.error('Error al agregar estudiante', error);
-    }
-  };
+    // --- Funciones CRUD para Subjects (las mismas, con tipos consistentes) ---
+    const addSubject = async (newSubject: Omit<Subject, 'id_materia'>) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fetch('/subjects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newSubject),
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+            const addedSubject: Subject = await response.json();
+            setSubjects((prevSubjects: Subject[]) => [...prevSubjects, addedSubject]);
+        } catch (err: any) {
+            console.error("Error adding subject:", err);
+            setError(`Failed to add subject: ${err.message}`);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const updateStudent = async (id_student: string, student: Omit<Student, 'id_student'>) => {
-    try {
-      const updatedStudent = await api.updateStudent(id_student, student);
-      setStudents(prev => prev.map(s => (s.id_student === id_student ? updatedStudent : s)));
-    } catch (error) {
-      console.error('Error al actualizar estudiante', error);
-    }
-  }
-  const fetchProfessors = async () => {
-    try {
-      const data = await api.getProfessorSubjects();
-      setProfessors(data);
-    } catch (error) {
-      console.error('Error al obtener profesores', error);
-    }
-  };
+    const addProfessor = async (newSubject: Omit<Subject, 'id_professor'>) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fetch('/professor', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newSubject),
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+            const addedSubject: Subject = await response.json();
+            setSubjects((prevSubjects: Subject[]) => [...prevSubjects, addedSubject]);
+        } catch (err: any) {
+            console.error("Error al crear nuevo profesor:", err);
+            setError(`Error encontrado en la peticion (Crear Profesor): ${err.message}`);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const fetchStudents = async () => {
-    try {
-      const data = await api.getStudents();
-      setStudents(data);
-    } catch (error) {
-      console.error('Error al obtener estudiantes', error);
-    }
-  };
+    const updateSubject = async (updatedSubject: Subject) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fetch(`/subjects/${updatedSubject.id_materia}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedSubject),
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+            const data: Subject = await response.json();
+            setSubjects((prevSubjects: Subject[]) =>
+                prevSubjects.map((subject) =>
+                    subject.id_materia === data.id_materia ? data : subject
+                )
+            );
+        } catch (err: any) {
+            console.error("Error updating subject:", err);
+            setError(`Failed to update subject: ${err.message}`);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const fetchSubjects = async () => {
-    try {
-      const data = await api.getAllSubjects(); 
-      setSubjects(data);
-    } catch (error) {
-      console.error('Error al obtener materias', error);
-    }
-  };
+    const deleteSubject = async (id: string) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fetch(`/subjects/${id}`, { method: 'DELETE' });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+            setSubjects((prevSubjects: Subject[]) => prevSubjects.filter((subject) => subject.id_materia !== id));
+        } catch (err: any) {
+            console.error("Error al intentar borrar materia:", err);
+            setError(`Fallo borrar la materias: ${err.message}`);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-
-  const deleteProfessor = async (id: string) => {
-    try {
-      await api.deleteProfessor(id);
-      setProfessors(prev => prev.filter(p => p.id_profesor !== id));
-    } catch (error) {
-      console.error('Error al borrar profesor', error);
-    }
-  };
-
-  const deleteSubject = async (id: string) => {
-    try {
-      await api.deleteSubject(id);
-      setSubjects(prev => prev.filter(p => p.id_materia !== id));
-    } catch (error) {
-      console.error('Error al borrar profesor', error);
-    }
-  };
-  const deleteStudent = async (id: string) => {
-    try {
-      await api.deleteStudent(id);
-      setStudents(prev => prev.filter(p => p.id_student !== id));
-    } catch (error) {
-      console.error('Error al borrar profesor', error);
-    }
-  };
-
-  // Add Subject
-  const addSubject = async (subject: Omit<Subject, 'id_materia'>) => {
-    try {
-      const newSubject = await api.createSubject(subject);
-      setSubjects(prev => [...prev, newSubject]);
-    } catch (error) {
-      console.error('Error al agregar materia', error);
-    }
-  };
-
-  // Update Subject
-  const updateSubject = async (id_materia: string, subject: Omit<Subject, 'id_materia'>) => {
-    try {
-      const updatedSubject = await api.updateSubject(id_materia, subject);
-      setSubjects(prev => prev.map(s => (s.id_materia === id_materia ? updatedSubject : s)));
-    } catch (error) {
-      console.error('Error al actualizar materia', error);
-    }
-  };
-
-  // Fetch Schedules
-  const fetchSchedules = async () => {
-    try {
-      const data = await api.getSchedules();
-      setSchedules(data);
-    } catch (error) {
-      console.error('Error al obtener horarios', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchProfessors();
-    fetchStudents();
-    fetchSubjects();
-    fetchSchedules();
-  }, []);
-
-  return (
-    <DataContext.Provider
-      value={{
-        professors,
-        students,
+    // Valores que se proporcionarán a los consumidores del contexto
+    const contextValue = {
         subjects,
+        students,
+        professors,
         schedules,
-        addProfessor,
-        updateProfessor,
-        addStudent,
-        updateStudent,
         addSubject,
         updateSubject,
-        fetchProfessors,
-        fetchStudents,
-        fetchSubjects,
-        fetchSchedules,
-        deleteProfessor,
         deleteSubject,
-        deleteStudent,
-      }}
-    >
-      {children}
-    </DataContext.Provider>
-  );
-};
+        loading,
+        error,
+        addProfessor,
+    };
 
-export const useData = () => {
-  const context = useContext(DataContext);
-  if (!context) {
-    throw new Error('Error en obtener el contexto de datos. Asegúrate de envolver tu componente con DataProvider.');
-  }
-  return context;
+    return (
+        <DataContext.Provider value={contextValue}>
+            {children}
+        </DataContext.Provider>
+    );
 };
-
-export default DataContext;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useData } from '../context/DataContext';
+import { useDataContext } from '../context/DataContext';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { Professor } from '../context/DataContext';
@@ -11,7 +11,7 @@ interface ProfessorFormProps {
 }
 
 const ProfessorForm: React.FC<ProfessorFormProps> = ({ professor, onClose, mode }) => {
-  const { addProfessor, updateProfessor} = useData();
+  const { addProfessor, updateProfessor} = useDataContext();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   
   const [formData, setFormData] = useState<Omit<Professor, 'id_profesor'>>({

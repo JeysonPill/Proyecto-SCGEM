@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useData } from '../context/DataContext';
+import { useDataContext } from '../context/DataContext';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
@@ -12,11 +12,11 @@ interface StudentFormProps {
 }
 
 const StudentForm: React.FC<StudentFormProps> = ({ student, onClose, mode }) => {
-  const { addStudent, updateStudent } = useData();
+  const { addStudent, updateStudent } = useDataContext();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const [formData, setFormData] = useState<Omit<Student, 'id_student'>>({
-    id: student?.id_student || '',
+    id: student?.id || '',
     matricula: student?.matricula || '',
     carrera: student?.carrera || '',
     semestre: student?.semestre || 1,

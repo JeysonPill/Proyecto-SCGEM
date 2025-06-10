@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useData } from '../context/DataContext';
+import { useDataContext } from '../context/DataContext';
 import Card from '../components/ui/Card';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
@@ -10,7 +10,7 @@ import { Student } from '../context/DataContext';
 import Input from '../components/ui/Input';
 
 const StudentsPage: React.FC = () => {
-  const { students, deleteStudent } = useData();
+  const { students } = useDataContext();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -38,7 +38,8 @@ const StudentsPage: React.FC = () => {
 
   const confirmDelete = () => {
     if (currentStudent) {
-      deleteStudent(currentStudent.id_student);
+      //deleteStudent(currentStudent.id);
+      console.log(`Deleting student: ${currentStudent.user_name}`);
       setIsDeleteModalOpen(false);
     }
   };
@@ -125,7 +126,7 @@ const StudentsPage: React.FC = () => {
         <Table
           columns={columns}
           data={filteredStudents}
-          keyExtractor={(student) => student.id_student}
+          keyExtractor={(student) => student.id}
           onRowClick={handleEdit}
           emptyState={
             <div className="text-center">

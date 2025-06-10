@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useData } from '../context/DataContext';
+import { useDataContext } from '../context/DataContext';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
@@ -12,7 +12,7 @@ interface SubjectFormProps {
 }
 
 const SubjectForm: React.FC<SubjectFormProps> = ({ subject, onClose, mode }) => {
-  const { addSubject, updateSubject } = useData();
+  const { addSubject, updateSubject } = useDataContext();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   
   const [formData, setFormData] = useState<Omit<Subject, 'id_materia'>>({
