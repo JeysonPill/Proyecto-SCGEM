@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+=======
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import * as api from '../services/api';
+import { useAuth } from './AuthContext';
+>>>>>>> 07a6dc4e49fc505fd097c61bf167116c69e1b61e
 
 
 export interface Subject {
@@ -107,6 +113,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+<<<<<<< HEAD
     // Obtener Profesores
     const fetchProfessors = async () => {
         setLoading(true);
@@ -247,6 +254,159 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Valores que se proporcionarán a los consumidores del contexto
     const contextValue = {
+=======
+export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  const [professors, setProfessors] = useState<Professor[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+
+  const addProfessor = async (id_professor: Omit<Professor, 'id_profesor'>) => {
+    if (!isAuthenticated) return;
+    try {
+      const newProfessor = await api.createProfessor(id_professor);
+      setProfessors(prev => [...prev, newProfessor]);
+    } catch (error) {
+      console.error('Error al agregar profesor', error);
+    }
+  };
+
+  const updateProfessor = async (id_profesor: string, professor: Omit<Professor, 'id_profesor'>) => {
+    if (!isAuthenticated) return;
+    try {
+      const updatedProfessor = await api.updateProfessor(id_profesor, professor);
+      setProfessors(prev => prev.map(p => (p.id_profesor === id_profesor ? updatedProfessor : p)));
+    } catch (error) {
+      console.error('Error al actualizar profesor', error);
+    }
+  }
+
+  const addStudent = async (student: Omit<Student, 'id_student'>) => {
+    if (!isAuthenticated) return;
+    try {
+      const newStudent = await api.createStudent(student);
+      setStudents(prev => [...prev, newStudent]);
+    } catch (error) {
+      console.error('Error al agregar estudiante', error);
+    }
+  };
+
+  const updateStudent = async (id_student: string, student: Omit<Student, 'id_student'>) => {
+    if (!isAuthenticated) return;
+    try {
+      const updatedStudent = await api.updateStudent(id_student, student);
+      setStudents(prev => prev.map(s => (s.id_student === id_student ? updatedStudent : s)));
+    } catch (error) {
+      console.error('Error al actualizar estudiante', error);
+    }
+  }
+
+  const fetchProfessors = async () => {
+    if (!isAuthenticated) return;
+    try {
+      const data = await api.getProfessorSubjects();
+      setProfessors(data);
+    } catch (error) {
+      console.error('Error al obtener profesores', error);
+    }
+  };
+
+  const fetchStudents = async () => {
+    if (!isAuthenticated) return;
+    try {
+      const data = await api.getStudents();
+      setStudents(data);
+    } catch (error) {
+      console.error('Error al obtener estudiantes', error);
+    }
+  };
+
+  const fetchSubjects = async () => {
+    if (!isAuthenticated) return;
+    try {
+      const data = await api.getAllSubjects(); 
+      setSubjects(data);
+    } catch (error) {
+      console.error('Error al obtener materias', error);
+    }
+  };
+
+  const deleteProfessor = async (id: string) => {
+    if (!isAuthenticated) return;
+    try {
+      await api.deleteProfessor(id);
+      setProfessors(prev => prev.filter(p => p.id_profesor !== id));
+    } catch (error) {
+      console.error('Error al borrar profesor', error);
+    }
+  };
+
+  const deleteSubject = async (id: string) => {
+    if (!isAuthenticated) return;
+    try {
+      await api.deleteSubject(id);
+      setSubjects(prev => prev.filter(p => p.id_materia !== id));
+    } catch (error) {
+      console.error('Error al borrar profesor', error);
+    }
+  };
+
+  const deleteStudent = async (id: string) => {
+    if (!isAuthenticated) return;
+    try {
+      await api.deleteStudent(id);
+      setStudents(prev => prev.filter(p => p.id_student !== id));
+    } catch (error) {
+      console.error('Error al borrar profesor', error);
+    }
+  };
+
+  const addSubject = async (subject: Omit<Subject, 'id_materia'>) => {
+    if (!isAuthenticated) return;
+    try {
+      const newSubject = await api.createSubject(subject);
+      setSubjects(prev => [...prev, newSubject]);
+    } catch (error) {
+      console.error('Error al agregar materia', error);
+    }
+  };
+
+  const updateSubject = async (id_materia: string, subject: Omit<Subject, 'id_materia'>) => {
+    if (!isAuthenticated) return;
+    try {
+      const updatedSubject = await api.updateSubject(id_materia, subject);
+      setSubjects(prev => prev.map(s => (s.id_materia === id_materia ? updatedSubject : s)));
+    } catch (error) {
+      console.error('Error al actualizar materia', error);
+    }
+  };
+
+  const fetchSchedules = async () => {
+    if (!isAuthenticated) return;
+    try {
+      const data = await api.getSchedules();
+      setSchedules(data);
+    } catch (error) {
+      console.error('Error al obtener horarios', error);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchProfessors();
+      fetchStudents();
+      fetchSubjects();
+      fetchSchedules();
+    }
+  }, [isAuthenticated]);
+
+  return (
+    <DataContext.Provider
+      value={{
+        professors,
+        students,
+>>>>>>> 07a6dc4e49fc505fd097c61bf167116c69e1b61e
         subjects,
         students,
         professors,
