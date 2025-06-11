@@ -378,7 +378,7 @@ const checkRole = (roles) => {
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
-    console.log("Intento de Login para:", username, password); // Log para depuración
+    console.log('Datos recibidos en /login:', username, password);
 
     // En un entorno real, la contraseña NUNCA debe almacenarse en texto plano.
     // Deberías usar una librería como `bcrypt` para comparar hashes.
@@ -409,7 +409,8 @@ app.post('/login', (req, res) => {
             token,
             user_role: user.user_role,
             user_id: user.id_user,
-            user_matricula: user.id_user // Asegúrate de que esto sea lo que espera tu frontend
+            user_matricula: user.id_user, // Asegúrate de que esto sea lo que espera tu frontend
+            user_password: user.password, // Esto es inseguro, no deberías enviar la contraseña al frontend
         });
         // console.dir(res.json()); // Esta línea causaría un error "Headers already sent". Debe ser eliminada.
     });

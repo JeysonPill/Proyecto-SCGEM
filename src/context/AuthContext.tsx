@@ -40,6 +40,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const handleLogin = async (username: string, password: string) => {
     setIsLoading(true);
+    console.log('Datos de inicio de sesión:', { username, password });
     try {
       const response = await api.post('/login', {
         method: 'POST',
@@ -69,6 +70,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       setUser(authenticatedUser);
       setIsAuthenticated(true);
+
+      console.dir('Login exitoso:', authenticatedUser);
 
     } catch (error: any) {
       console.error('Login fallido:', error);
