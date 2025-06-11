@@ -66,7 +66,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     } catch (error: any) {
       console.error('Login fallido:', error);
-      console.error('Error de autenticación:', error.message || error);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       setUser(null);
