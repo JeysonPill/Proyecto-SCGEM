@@ -1,6 +1,6 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import  api  from '../services/api';
+import api from '../services/api';
 //import { ROLES } from '../utils/roles';
 import { UserAuthData } from '../types'; // Importamos la interfaz UserAuthData
 
@@ -40,23 +40,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const handleLogin = async (username: string, password: string) => {
     setIsLoading(true);
-    console.log('Datos de inicio de sesión:', { username, password });
     try {
       const response = await api.post('/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
+        username,
+        password,
       });
       console.log(response);
 
-      const data: {
-        token: string;
-        user_role: string;
-        user_id: string;
-        user_matricula: string; // Asegúrate de que tu backend siempre envíe esto
-      } = await response.data();
+      const data = response.data;
 
       const authenticatedUser: UserAuthData = {
         user_id: data.user_id,
@@ -75,6 +66,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     } catch (error: any) {
       console.error('Login fallido:', error);
+      console.error('Error de autenticación:', error.message || error);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       setUser(null);

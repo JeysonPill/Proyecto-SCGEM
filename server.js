@@ -320,7 +320,7 @@ const port = 3000;
 
 // Configuración de CORS: permite solicitudes desde tu frontend de Vite
 app.use(cors({
-    origin: 'http://localhost:5173' // Asegúrate de que esta URL sea la de tu frontend
+    origin: 'http://192.168.100.20:5173' // Asegúrate de que esta URL sea la de tu frontend
 }));
 
 // Middleware para parsear JSON: express.json() reemplaza a body-parser.json()
@@ -669,5 +669,5 @@ app.post('/professor/saveGrade', (req, res) => {
 
 // Inicio del servidor
 app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
+    console.log(`Server running on http://192.168.100.20:${port}`);
 });
