@@ -1,6 +1,6 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { API_BASE_URL } from '../services/api';
+import  api  from '../services/api';
 //import { ROLES } from '../utils/roles';
 import { UserAuthData } from '../types'; // Importamos la interfaz UserAuthData
 
@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const handleLogin = async (username: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/login`, {
+      const response = await api.post('/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -49,17 +49,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         body: JSON.stringify({ username, password }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error de autenticación');
-      }
 
       const data: {
         token: string;
         user_role: string;
         user_id: string;
         user_matricula: string; // Asegúrate de que tu backend siempre envíe esto
-      } = await response.json();
+      } = await response.data();
 
       const authenticatedUser: UserAuthData = {
         user_id: data.user_id,
@@ -74,13 +70,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(authenticatedUser);
       setIsAuthenticated(true);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login fallido:', error);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       setUser(null);
       setIsAuthenticated(false);
-      throw error;
+      throw new Error(error.message || 'Error de autenticación');
     } finally {
       setIsLoading(false);
     }

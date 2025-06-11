@@ -1,7 +1,7 @@
 // src/context/DataContext.tsx
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { API_BASE_URL } from '../services/api';
+import api from '../services/api';
 import { ROLES } from '../utils/roles';
 import {
   StudentSubject,
@@ -88,7 +88,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/student/tabla-datos-estudiante/`, {
+      const response = await fetch(`${api}/student/tabla-datos-estudiante/`, {
         headers: getAuthHeaders(token),
       });
       if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar materias del estudiante.');
@@ -109,7 +109,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/student/tabla-calificaciones/`, {
+      const response = await fetch(`${api}/student/tabla-calificaciones/`, {
         headers: getAuthHeaders(token),
       });
       if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar calificaciones.');
@@ -130,7 +130,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/student/tabla-kardez/`, {
+      const response = await fetch(`${api}/student/tabla-kardez/`, {
         headers: getAuthHeaders(token),
       });
       if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar kardex.');
@@ -151,7 +151,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/student/tabla-pagos/`, {
+      const response = await fetch(`${api}/student/tabla-pagos/`, {
         headers: getAuthHeaders(token),
       });
       if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar pagos.');
@@ -171,7 +171,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/student/registro-asistencias/`, {
+      const response = await fetch(`${api}/student/registro-asistencias/`, {
         method: 'POST',
         headers: getAuthHeaders(token),
         body: JSON.stringify({ codigo_asistencia: codigo }),
@@ -197,7 +197,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/professor/schedule/`, {
+      const response = await fetch(`${api}/professor/schedule/`, {
         headers: getAuthHeaders(token),
       });
       if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar horario del profesor.');
@@ -218,7 +218,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/professor/QR_CODE_GEN/`, {
+      const response = await fetch(`${api}/professor/QR_CODE_GEN/`, {
         headers: getAuthHeaders(token),
       });
       if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar materias para QR.');
@@ -239,7 +239,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/professor/getSubjects`, {
+      const response = await fetch(`${api}/professor/getSubjects`, {
         headers: getAuthHeaders(token),
       });
       if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar materias para calificar.');
@@ -260,7 +260,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/professor/getStudents?id_materia=${idMateria}&id_grupo=${idGrupo}`, {
+      const response = await fetch(`${api}/professor/getStudents?id_materia=${idMateria}&id_grupo=${idGrupo}`, {
         headers: getAuthHeaders(token),
       });
       if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar alumnos para calificar.');
@@ -295,7 +295,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         calif_final: califFinal,
         ciclo_cursando: cicloCursando,
       };
-      const response = await fetch(`${API_BASE_URL}/professor/saveGrade`, {
+      const response = await fetch(`${api}/professor/saveGrade`, {
         method: 'POST',
         headers: getAuthHeaders(token),
         body: JSON.stringify(payload),
