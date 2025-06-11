@@ -48,7 +48,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         },
         body: JSON.stringify({ username, password }),
       });
-
+      console.log(response);
 
       const data: {
         token: string;
