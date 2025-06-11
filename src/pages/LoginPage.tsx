@@ -1,75 +1,55 @@
+// src/pages/LoginPage.tsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import Card from '../components/ui/Card';
-import Input from '../components/ui/Input';
-import Button from '../components/ui/Button';
-import { BookOpen, User, Lock } from 'lucide-react';
+
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const { login, isLoading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-      try {
+    setLoginError(null); // Limpiar errores previos
+    try {
       await login(username, password);
-      navigate('/');
-    } catch (err) {
-      setError('Invalid username or password');
-    } finally {
-      setIsLoading(false);
+      // El App.tsx se encargará de la redirección según el rol
+    } catch (err: any) {
+      setLoginError(err.message || 'Error de login desconocido');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <BookOpen className="h-12 w-12 text-blue-600" />
-        </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Sistema de control de gestión escolar a medida
-        </h2>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <Card>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Input
-              label="Username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              leftIcon={<User className="h-5 w-5 text-gray-400" />}
-              error={error}
-            />
-
-            <Input
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              leftIcon={<Lock className="h-5 w-5 text-gray-400" />}
-            />
-
-            <Button
-              type="submit"
-              fullWidth
-              disabled={isLoading}
-            >
-              {isLoading ? 'Logging in...' : 'Login'}
-            </Button>
-            {error && <p className="mt-2 text-sm text-red-600 text-center">{error}</p>}
-          </form>
-        </Card>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f4f4f4' }}>
+      <div style={{ background: 'white', padding: '40px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', textAlign: 'center' }}>
+        <h2>Iniciar Sesión en SCGEM</h2>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
+          <input
+            type="text"
+            placeholder="Usuario"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+          />
+          <input
+            type="password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+          />
+          <button
+            type="submit"
+            disabled={isLoading}
+            style={{ padding: '10px 20px', background: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+          >
+            {isLoading ? 'Iniciando sesión...' : 'Ingresar'}
+          </button>
+          {loginError && <p style={{ color: 'red', marginTop: '10px' }}>{loginError}</p>}
+        </form>
       </div>
     </div>
   );

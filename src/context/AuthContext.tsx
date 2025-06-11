@@ -1,67 +1,100 @@
+// src/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { login as apiLogin } from '../services/api';
+import { API_BASE_URL } from '../services/api';
+//import { ROLES } from '../utils/roles';
+import { UserAuthData } from '../types'; // Importamos la interfaz UserAuthData
 
-interface User {
-  user_id: string;
-  user_name: string;
-  user_role: string;
-  user_matricula: string;
-}
-
-interface AuthContextType {
-  user: User | null;
+export interface AuthContextType {
+  user: UserAuthData | null;
+  isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
-  isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserAuthData | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Nuevo estado de carga
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (token && userData) {
-      setUser(JSON.parse(userData));
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+
+    if (storedToken && storedUser) {
+      try {
+        const parsedUser: UserAuthData = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } catch (e) {
+        console.error("Error parsing stored user data:", e);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setIsAuthenticated(false);
+      }
     }
+    setIsLoading(false);
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const handleLogin = async (username: string, password: string) => {
+    setIsLoading(true);
     try {
-      const response = await apiLogin(username, password);
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify({
-        user_id: response.user_id,
-        user_name: username,
-        user_role: response.user_role,
-        user_matricula: response.user_matricula
-      }));
-      setUser({
-        user_id: response.user_id,
-        user_name: username,
-        user_role: response.user_role,
-        user_matricula: response.user_matricula
+      const response = await fetch(`${API_BASE_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error de autenticación');
+      }
+
+      const data: {
+        token: string;
+        user_role: string;
+        user_id: string;
+        user_matricula: string; // Asegúrate de que tu backend siempre envíe esto
+      } = await response.json();
+
+      const authenticatedUser: UserAuthData = {
+        user_id: data.user_id,
+        user_name: username,
+        user_role: data.user_role,
+        user_matricula: data.user_matricula,
+      };
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(authenticatedUser));
+
+      setUser(authenticatedUser);
+      setIsAuthenticated(true);
+
     } catch (error) {
-      throw new Error('Login failed');
+      console.error('Login fallido:', error);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUser(null);
+      setIsAuthenticated(false);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const logout = () => {
+  const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
+    setIsAuthenticated(false);
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      logout,
-      isAuthenticated: !!user
-    }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, login: handleLogin, logout: handleLogout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
@@ -70,7 +103,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
   }
   return context;
 };

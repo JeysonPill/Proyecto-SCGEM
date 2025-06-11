@@ -1,19 +1,17 @@
 // src/pages/estudiante/Dashboard.tsx
 import React, { useEffect, useState } from 'react';
-import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
-import { useDataContext } from '../context/DataContext';
-import { useAuth } from '../context/AuthContext';
-import Layout from '../components/layout/Layout'; // Importa el Layout
+import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'; // Para navegación interna
+import { useDataContext } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext'; // Para mostrar matrícula o nombre
 
-// Importar todos los tipos relevantes para el estudiante
-
-// Componentes internos para cada vista del dashboard del estudiante
+// Puedes crear componentes separados para cada vista (MateriasEstudiante, CalificacionesEstudiante, etc.)
+// src/pages/estudiante/Materias.tsx
 const MateriasEstudiante: React.FC = () => {
   const { studentSubjects, fetchStudentSubjects, isLoading, error } = useDataContext();
 
   useEffect(() => {
     fetchStudentSubjects();
-  }, [fetchStudentSubjects]);
+  }, [fetchStudentSubjects]); // La dependencia es la función, pero React garantiza estabilidad
 
   if (isLoading) return <p>Cargando materias...</p>;
   if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
@@ -21,7 +19,7 @@ const MateriasEstudiante: React.FC = () => {
   return (
     <div>
       <h3>Mis Materias</h3>
-      <table border={1} style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
+      <table border={1} style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
             <th>Materia</th>
@@ -36,7 +34,7 @@ const MateriasEstudiante: React.FC = () => {
               <tr key={index}>
                 <td>{s.materia_nombre}</td>
                 <td>{s.profesor_nombre}</td>
-                <td dangerouslySetInnerHTML={{ __html: s.horarios }}></td>
+                <td dangerouslySetInnerHTML={{ __html: s.horarios }}></td> {/* OJO: usar dangerouslySetInnerHTML con cuidado */}
                 <td>{s.id_grupo}</td>
               </tr>
             ))
@@ -49,6 +47,7 @@ const MateriasEstudiante: React.FC = () => {
   );
 };
 
+// src/pages/estudiante/Calificaciones.tsx
 const CalificacionesEstudiante: React.FC = () => {
   const { studentGrades, fetchStudentGrades, isLoading, error } = useDataContext();
 
@@ -62,7 +61,7 @@ const CalificacionesEstudiante: React.FC = () => {
   return (
     <div>
       <h3>Mis Calificaciones</h3>
-      <table border={1} style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
+      <table border={1} style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
             <th>Materia</th>
@@ -94,90 +93,7 @@ const CalificacionesEstudiante: React.FC = () => {
   );
 };
 
-const KardexEstudiante: React.FC = () => {
-  const { studentKardex, fetchStudentKardex, isLoading, error } = useDataContext();
-
-  useEffect(() => {
-    fetchStudentKardex();
-  }, [fetchStudentKardex]);
-
-  if (isLoading) return <p>Cargando kardex...</p>;
-  if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
-
-  return (
-    <div>
-      <h3>Mi Kardex</h3>
-      <table border={1} style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
-        <thead>
-          <tr>
-            <th>Materia</th>
-            <th>Periodo</th>
-            <th>Créditos</th>
-            <th>Calificación Final</th>
-            <th>Estatus</th>
-          </tr>
-        </thead>
-        <tbody>
-          {studentKardex.length > 0 ? (
-            studentKardex.map((k, index) => (
-              <tr key={index}>
-                <td>{k.materia}</td>
-                <td>{k.periodo}</td>
-                <td>{k.creditos}</td>
-                <td>{k.calificacion_final}</td>
-                <td>{k.estatus}</td>
-              </tr>
-            ))
-          ) : (
-            <tr><td colSpan={5}>No hay entradas en el kardex.</td></tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-const PagosEstudiante: React.FC = () => {
-  const { studentPayments, fetchStudentPayments, isLoading, error } = useDataContext();
-
-  useEffect(() => {
-    fetchStudentPayments();
-  }, [fetchStudentPayments]);
-
-  if (isLoading) return <p>Cargando pagos...</p>;
-  if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
-
-  return (
-    <div>
-      <h3>Mis Pagos</h3>
-      <table border={1} style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
-        <thead>
-          <tr>
-            <th>Concepto</th>
-            <th>Monto</th>
-            <th>Fecha</th>
-            <th>Estatus</th>
-          </tr>
-        </thead>
-        <tbody>
-          {studentPayments.length > 0 ? (
-            studentPayments.map((p, index) => (
-              <tr key={index}>
-                <td>{p.concepto}</td>
-                <td>${p.monto.toFixed(2)}</td>
-                <td>{p.fecha}</td>
-                <td>{p.estatus}</td>
-              </tr>
-            ))
-          ) : (
-            <tr><td colSpan={4}>No hay pagos registrados.</td></tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
+// src/pages/estudiante/Asistencia.tsx (para el POST)
 const AsistenciaEstudiante: React.FC = () => {
   const { registerStudentAttendance, isLoading, error } = useDataContext();
   const [attendanceCode, setAttendanceCode] = useState<string>('');
@@ -185,11 +101,11 @@ const AsistenciaEstudiante: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage(null);
+    setMessage(null); // Limpiar mensajes anteriores
     try {
       const response = await registerStudentAttendance(attendanceCode);
       setMessage(response.message);
-      setAttendanceCode('');
+      setAttendanceCode(''); // Limpiar input
     } catch (err: any) {
       setMessage(`Error: ${err.message || 'Error al registrar asistencia.'}`);
     }
@@ -198,7 +114,7 @@ const AsistenciaEstudiante: React.FC = () => {
   return (
     <div>
       <h3>Registrar Asistencia</h3>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '300px', marginTop: '10px' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '300px' }}>
         <input
           type="text"
           placeholder="Código de Asistencia"
@@ -206,30 +122,26 @@ const AsistenciaEstudiante: React.FC = () => {
           onChange={(e) => setAttendanceCode(e.target.value)}
           required
           disabled={isLoading}
-          style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
         />
-        <button
-          type="submit"
-          disabled={isLoading}
-          style={{ padding: '8px 15px', background: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-        >
+        <button type="submit" disabled={isLoading}>
           {isLoading ? 'Registrando...' : 'Registrar Asistencia'}
         </button>
-        {message && <p style={{ color: error ? 'red' : 'green', marginTop: '10px' }}>{message}</p>}
+        {message && <p style={{ color: error ? 'red' : 'green' }}>{message}</p>}
       </form>
     </div>
   );
 };
+// ... y así sucesivamente para Kardex y Pagos ...
 
-
-// Componente principal del Dashboard de Estudiante
+// Dashboard Estudiante principal
 const DashboardEstudiante: React.FC = () => {
-  const { user } = useAuth();
-  const location = useLocation();
+  const { user } = useAuth(); // Para mostrar el nombre del estudiante
+  const location = useLocation(); // Para saber la ruta actual y resaltar el link
 
   return (
-    <Layout> {/* Envuelve el contenido en el Layout */}
+    <div>
       <h2>Dashboard de Estudiante {user?.user_name ? `(${user.user_name})` : ''}</h2>
+      {/* Navegación interna del dashboard */}
       <nav style={{ marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
         <ul style={{ listStyle: 'none', padding: 0, display: 'flex', gap: '15px' }}>
           <li><Link to="materias" style={{ fontWeight: location.pathname.includes('/materias') ? 'bold' : 'normal' }}>Materias</Link></li>
@@ -240,16 +152,17 @@ const DashboardEstudiante: React.FC = () => {
         </ul>
       </nav>
 
+      {/* Rutas anidadas para el contenido del dashboard */}
       <Routes>
-        <Route path="/" element={<Navigate to="materias" replace />} />
+        <Route path="/" element={<Navigate to="materias" replace />} /> {/* Ruta por defecto */}
         <Route path="materias" element={<MateriasEstudiante />} />
         <Route path="calificaciones" element={<CalificacionesEstudiante />} />
-        <Route path="kardex" element={<KardexEstudiante />} />
-        <Route path="pagos" element={<PagosEstudiante />} />
+        <Route path="kardex" element={<MateriasEstudiante />} /> {/* Debes crear el componente real de Kardex */}
+        <Route path="pagos" element={<MateriasEstudiante />} />     {/* Debes crear el componente real de Pagos */}
         <Route path="asistencia" element={<AsistenciaEstudiante />} />
         <Route path="*" element={<div>Selecciona una opción del menú.</div>} />
       </Routes>
-    </Layout>
+    </div>
   );
 };
 

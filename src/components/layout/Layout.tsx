@@ -1,22 +1,20 @@
-import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
-import Sidebar from './Sidebar';
+// src/components/layout/Layout.tsx
+import React, { ReactNode } from 'react';
 import Header from './Header';
+import Sidebar from './Sidebar';
 
-const Layout: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+interface LayoutProps {
+  children: ReactNode;
+}
 
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header setSidebarOpen={setSidebarOpen} />
-        
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50">
-          <div className="max-w-7xl mx-auto">
-            <Outlet />
-          </div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <Header />
+      <div style={{ display: 'flex', flexGrow: 1 }}>
+        <Sidebar />
+        <main style={{ flexGrow: 1, padding: '20px' }}>
+          {children}
         </main>
       </div>
     </div>

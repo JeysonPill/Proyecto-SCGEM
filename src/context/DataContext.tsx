@@ -1,427 +1,351 @@
-<<<<<<< HEAD
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-=======
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import * as api from '../services/api';
+// src/context/DataContext.tsx
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
->>>>>>> 07a6dc4e49fc505fd097c61bf167116c69e1b61e
+import { API_BASE_URL } from '../services/api';
+import { ROLES } from '../utils/roles';
+import {
+  StudentSubject,
+  StudentGrade,
+  StudentKardexEntry,
+  StudentPayment,
+  AttendanceResponse,
+  ProfessorScheduleEntry,
+  ProfessorSubjectGroup,
+  StudentForGrading,
+} from '../types/index'; // Importamos todos los tipos necesarios
 
+interface DataContextType {
+  // Estado para estudiante
+  studentSubjects: StudentSubject[];
+  studentGrades: StudentGrade[];
+  studentKardex: StudentKardexEntry[];
+  studentPayments: StudentPayment[];
+  
+  // Estado para profesor
+  professorSchedule: ProfessorScheduleEntry[];
+  professorQrSubjects: ProfessorSubjectGroup[];
+  professorGradingSubjects: ProfessorSubjectGroup[];
+  currentStudentsForGrading: StudentForGrading[];
 
-export interface Subject {
-    id_materia: string;
-    materia_nombre: string;
-    description: string;
-    sem_cursante: number;
+  // Estados de carga y error
+  isLoading: boolean;
+  error: string | null;
+
+  // Funciones para estudiante
+  fetchStudentSubjects: () => Promise<void>;
+  fetchStudentGrades: () => Promise<void>;
+  fetchStudentKardex: () => Promise<void>;
+  fetchStudentPayments: () => Promise<void>;
+  registerStudentAttendance: (codigo: string) => Promise<AttendanceResponse>;
+
+  // Funciones para profesor
+  fetchProfessorSchedule: () => Promise<void>;
+  fetchProfessorQrSubjects: () => Promise<void>;
+  fetchProfessorGradingSubjects: () => Promise<void>;
+  fetchStudentsForGrading: (idMateria: string, idGrupo: string) => Promise<void>;
+  saveStudentGrade: (
+    idMateria: string,
+    matricula: string,
+    califP1: number | null,
+    califP2: number | null,
+    califFinal: number | null,
+    cicloCursando: string // Este campo es importante para tu backend
+  ) => Promise<{ message: string }>;
 }
 
+const DataContext = createContext<DataContextType | undefined>(undefined);
 
-export interface Student {
-    id: string;
-    user_name: string;
-    carrera: string;
-    semestre: number;
-    matricula: string;
-    celular: string;
-    email: string;
-}
-
-
-export interface Professor {
-    id_professor: string;
-    nombre: string;
-    celular: string;
-    email: string;
-
-}
-
-
-export interface Schedule {
-    id_schedule: string;
-    id_materia: string;
-    id_profesor: string;
-    id_grupo: string;
-}
-
-
-interface DataContextProps {
-    subjects: Subject[];
-    students: Student[];
-    professors: Professor[];
-    schedules: Schedule[];
-    loading: boolean;
-    error: string | null;
-
-
-    addSubject: (newSubject: Omit<Subject, 'id_materia'>) => Promise<void>;
-    updateSubject: (updatedSubject: Subject) => Promise<void>;
-    deleteSubject: (id: string) => Promise<void>;
-}
-
-
-const DataContext = createContext<DataContextProps | undefined>(undefined);
-
-
-export const useDataContext = () => {
-    const context = useContext(DataContext);
-    if (!context) {
-        throw new Error('useDataContext debe ser usado dentro de un DataProvider');
-    }
-    return context;
+const getAuthHeaders = (token: string) => {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  };
 };
 
-
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user, isAuthenticated } = useAuth();
+  const token = localStorage.getItem('token'); // Acceder al token directamente de localStorage
 
-    const [subjects, setSubjects] = useState<Subject[]>([]);
-    const [students, setStudents] = useState<Student[]>([]);
-    const [professors, setProfessors] = useState<Professor[]>([]);
-    const [schedules, setSchedules] = useState<Schedule[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
+  const [studentSubjects, setStudentSubjects] = useState<StudentSubject[]>([]);
+  const [studentGrades, setStudentGrades] = useState<StudentGrade[]>([]);
+  const [studentKardex, setStudentKardex] = useState<StudentKardexEntry[]>([]);
+  const [studentPayments, setStudentPayments] = useState<StudentPayment[]>([]);
 
+  const [professorSchedule, setProfessorSchedule] = useState<ProfessorScheduleEntry[]>([]);
+  const [professorQrSubjects, setProfessorQrSubjects] = useState<ProfessorSubjectGroup[]>([]);
+  const [professorGradingSubjects, setProfessorGradingSubjects] = useState<ProfessorSubjectGroup[]>([]);
+  const [currentStudentsForGrading, setCurrentStudentsForGrading] = useState<StudentForGrading[]>([]);
 
-    const fetchSubjects = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch('/subjects');
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data: Subject[] = await response.json();
-            setSubjects(data);
-        } catch (err: any) {
-            console.error("Error fetching subjects:", err);
-            setError(`Failed to fetch subjects: ${err.message}`);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-    // Obtener Estudiantes
-    const fetchStudents = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch('/students');
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data: Student[] = await response.json();
-            setStudents(data);
-        } catch (err: any) {
-            console.error("Error fetching students:", err);
-            setError(`Failed to fetch students: ${err.message}`);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-<<<<<<< HEAD
-    // Obtener Profesores
-    const fetchProfessors = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch('/professors'); // Ajusta la ruta a tu endpoint de profesores
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data: Professor[] = await response.json();
-            setProfessors(data);
-        } catch (err: any) {
-            console.error("Error fetching professors:", err);
-            setError(`Failed to fetch professors: ${err.message}`);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Obtener Horarios
-    const fetchSchedules = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch('/schedules'); // Ajusta la ruta a tu endpoint de horarios
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data: Schedule[] = await response.json();
-            setSchedules(data);
-        } catch (err: any) {
-            console.error("Error fetching schedules:", err);
-            setError(`Failed to fetch schedules: ${err.message}`);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // useEffect para cargar todas las entidades cuando el componente se monta
-    useEffect(() => {
-        fetchSubjects();
-        fetchStudents();
-        fetchProfessors();
-        fetchSchedules();
-    }, []);
-
-    // --- Funciones CRUD para Subjects (las mismas, con tipos consistentes) ---
-    const addSubject = async (newSubject: Omit<Subject, 'id_materia'>) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch('/subjects', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newSubject),
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-            }
-            const addedSubject: Subject = await response.json();
-            setSubjects((prevSubjects: Subject[]) => [...prevSubjects, addedSubject]);
-        } catch (err: any) {
-            console.error("Error adding subject:", err);
-            setError(`Failed to add subject: ${err.message}`);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const addProfessor = async (newSubject: Omit<Subject, 'id_professor'>) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch('/professor', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newSubject),
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-            }
-            const addedSubject: Subject = await response.json();
-            setSubjects((prevSubjects: Subject[]) => [...prevSubjects, addedSubject]);
-        } catch (err: any) {
-            console.error("Error al crear nuevo profesor:", err);
-            setError(`Error encontrado en la peticion (Crear Profesor): ${err.message}`);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const updateSubject = async (updatedSubject: Subject) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch(`/subjects/${updatedSubject.id_materia}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedSubject),
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-            }
-            const data: Subject = await response.json();
-            setSubjects((prevSubjects: Subject[]) =>
-                prevSubjects.map((subject) =>
-                    subject.id_materia === data.id_materia ? data : subject
-                )
-            );
-        } catch (err: any) {
-            console.error("Error updating subject:", err);
-            setError(`Failed to update subject: ${err.message}`);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const deleteSubject = async (id: string) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch(`/subjects/${id}`, { method: 'DELETE' });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-            }
-            setSubjects((prevSubjects: Subject[]) => prevSubjects.filter((subject) => subject.id_materia !== id));
-        } catch (err: any) {
-            console.error("Error al intentar borrar materia:", err);
-            setError(`Fallo borrar la materias: ${err.message}`);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Valores que se proporcionarán a los consumidores del contexto
-    const contextValue = {
-=======
-export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  const [professors, setProfessors] = useState<Professor[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
-
-  const addProfessor = async (id_professor: Omit<Professor, 'id_profesor'>) => {
-    if (!isAuthenticated) return;
+  // Funciones para Estudiante
+  const fetchStudentSubjects = async () => {
+    if (!isAuthenticated || user?.user_role !== ROLES.STUDENT || !token) {
+      setError("No autenticado o no es estudiante.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
     try {
-      const newProfessor = await api.createProfessor(id_professor);
-      setProfessors(prev => [...prev, newProfessor]);
-    } catch (error) {
-      console.error('Error al agregar profesor', error);
+      const response = await fetch(`${API_BASE_URL}/student/tabla-datos-estudiante/`, {
+        headers: getAuthHeaders(token),
+      });
+      if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar materias del estudiante.');
+      setStudentSubjects(await response.json());
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error fetching student subjects:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const updateProfessor = async (id_profesor: string, professor: Omit<Professor, 'id_profesor'>) => {
-    if (!isAuthenticated) return;
-    try {
-      const updatedProfessor = await api.updateProfessor(id_profesor, professor);
-      setProfessors(prev => prev.map(p => (p.id_profesor === id_profesor ? updatedProfessor : p)));
-    } catch (error) {
-      console.error('Error al actualizar profesor', error);
+  const fetchStudentGrades = async () => {
+    if (!isAuthenticated || user?.user_role !== ROLES.STUDENT || !token) {
+      setError("No autenticado o no es estudiante.");
+      return;
     }
-  }
-
-  const addStudent = async (student: Omit<Student, 'id_student'>) => {
-    if (!isAuthenticated) return;
+    setIsLoading(true);
+    setError(null);
     try {
-      const newStudent = await api.createStudent(student);
-      setStudents(prev => [...prev, newStudent]);
-    } catch (error) {
-      console.error('Error al agregar estudiante', error);
+      const response = await fetch(`${API_BASE_URL}/student/tabla-calificaciones/`, {
+        headers: getAuthHeaders(token),
+      });
+      if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar calificaciones.');
+      setStudentGrades(await response.json());
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error fetching student grades:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const updateStudent = async (id_student: string, student: Omit<Student, 'id_student'>) => {
-    if (!isAuthenticated) return;
-    try {
-      const updatedStudent = await api.updateStudent(id_student, student);
-      setStudents(prev => prev.map(s => (s.id_student === id_student ? updatedStudent : s)));
-    } catch (error) {
-      console.error('Error al actualizar estudiante', error);
+  const fetchStudentKardex = async () => {
+    if (!isAuthenticated || user?.user_role !== ROLES.STUDENT || !token) {
+      setError("No autenticado o no es estudiante.");
+      return;
     }
-  }
-
-  const fetchProfessors = async () => {
-    if (!isAuthenticated) return;
+    setIsLoading(true);
+    setError(null);
     try {
-      const data = await api.getProfessorSubjects();
-      setProfessors(data);
-    } catch (error) {
-      console.error('Error al obtener profesores', error);
+      const response = await fetch(`${API_BASE_URL}/student/tabla-kardez/`, {
+        headers: getAuthHeaders(token),
+      });
+      if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar kardex.');
+      setStudentKardex(await response.json());
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error fetching student kardex:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const fetchStudents = async () => {
-    if (!isAuthenticated) return;
+  const fetchStudentPayments = async () => {
+    if (!isAuthenticated || user?.user_role !== ROLES.STUDENT || !token) {
+      setError("No autenticado o no es estudiante.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
     try {
-      const data = await api.getStudents();
-      setStudents(data);
-    } catch (error) {
-      console.error('Error al obtener estudiantes', error);
+      const response = await fetch(`${API_BASE_URL}/student/tabla-pagos/`, {
+        headers: getAuthHeaders(token),
+      });
+      if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar pagos.');
+      setStudentPayments(await response.json());
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error fetching student payments:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const fetchSubjects = async () => {
-    if (!isAuthenticated) return;
+  const registerStudentAttendance = async (codigo: string): Promise<AttendanceResponse> => {
+    if (!isAuthenticated || user?.user_role !== ROLES.STUDENT || !token) {
+      throw new Error("No autenticado o no es estudiante.");
+    }
+    setIsLoading(true);
+    setError(null);
     try {
-      const data = await api.getAllSubjects(); 
-      setSubjects(data);
-    } catch (error) {
-      console.error('Error al obtener materias', error);
+      const response = await fetch(`${API_BASE_URL}/student/registro-asistencias/`, {
+        method: 'POST',
+        headers: getAuthHeaders(token),
+        body: JSON.stringify({ codigo_asistencia: codigo }),
+      });
+      const data: AttendanceResponse = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Error al registrar asistencia.');
+      return data;
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error registering attendance:", err);
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const deleteProfessor = async (id: string) => {
-    if (!isAuthenticated) return;
+  // Funciones para Profesor
+  const fetchProfessorSchedule = async () => {
+    if (!isAuthenticated || user?.user_role !== ROLES.PROFESSOR || !token) {
+      setError("No autenticado o no es profesor.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
     try {
-      await api.deleteProfessor(id);
-      setProfessors(prev => prev.filter(p => p.id_profesor !== id));
-    } catch (error) {
-      console.error('Error al borrar profesor', error);
+      const response = await fetch(`${API_BASE_URL}/professor/schedule/`, {
+        headers: getAuthHeaders(token),
+      });
+      if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar horario del profesor.');
+      setProfessorSchedule(await response.json());
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error fetching professor schedule:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const deleteSubject = async (id: string) => {
-    if (!isAuthenticated) return;
+  const fetchProfessorQrSubjects = async () => {
+    if (!isAuthenticated || user?.user_role !== ROLES.PROFESSOR || !token) {
+      setError("No autenticado o no es profesor.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
     try {
-      await api.deleteSubject(id);
-      setSubjects(prev => prev.filter(p => p.id_materia !== id));
-    } catch (error) {
-      console.error('Error al borrar profesor', error);
+      const response = await fetch(`${API_BASE_URL}/professor/QR_CODE_GEN/`, {
+        headers: getAuthHeaders(token),
+      });
+      if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar materias para QR.');
+      setProfessorQrSubjects(await response.json());
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error fetching QR subjects:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const deleteStudent = async (id: string) => {
-    if (!isAuthenticated) return;
+  const fetchProfessorGradingSubjects = async () => {
+    if (!isAuthenticated || user?.user_role !== ROLES.PROFESSOR || !token) {
+      setError("No autenticado o no es profesor.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
     try {
-      await api.deleteStudent(id);
-      setStudents(prev => prev.filter(p => p.id_student !== id));
-    } catch (error) {
-      console.error('Error al borrar profesor', error);
+      const response = await fetch(`${API_BASE_URL}/professor/getSubjects`, {
+        headers: getAuthHeaders(token),
+      });
+      if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar materias para calificar.');
+      setProfessorGradingSubjects(await response.json());
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error fetching grading subjects:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const addSubject = async (subject: Omit<Subject, 'id_materia'>) => {
-    if (!isAuthenticated) return;
+  const fetchStudentsForGrading = async (idMateria: string, idGrupo: string) => {
+    if (!isAuthenticated || user?.user_role !== ROLES.PROFESSOR || !token) {
+      setError("No autenticado o no es profesor.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
     try {
-      const newSubject = await api.createSubject(subject);
-      setSubjects(prev => [...prev, newSubject]);
-    } catch (error) {
-      console.error('Error al agregar materia', error);
+      const response = await fetch(`${API_BASE_URL}/professor/getStudents?id_materia=${idMateria}&id_grupo=${idGrupo}`, {
+        headers: getAuthHeaders(token),
+      });
+      if (!response.ok) throw new Error((await response.json()).message || 'Error al cargar alumnos para calificar.');
+      setCurrentStudentsForGrading(await response.json());
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error fetching students for grading:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const updateSubject = async (id_materia: string, subject: Omit<Subject, 'id_materia'>) => {
-    if (!isAuthenticated) return;
+  const saveStudentGrade = async (
+    idMateria: string,
+    matricula: string,
+    califP1: number | null,
+    califP2: number | null,
+    califFinal: number | null,
+    cicloCursando: string
+  ): Promise<{ message: string }> => {
+    if (!isAuthenticated || user?.user_role !== ROLES.PROFESSOR || !token) {
+      throw new Error("No autenticado o no es profesor.");
+    }
+    setIsLoading(true);
+    setError(null);
     try {
-      const updatedSubject = await api.updateSubject(id_materia, subject);
-      setSubjects(prev => prev.map(s => (s.id_materia === id_materia ? updatedSubject : s)));
-    } catch (error) {
-      console.error('Error al actualizar materia', error);
+      const payload = {
+        id_materia: idMateria,
+        matricula: matricula,
+        calif_p1: califP1,
+        calif_p2: califP2,
+        calif_final: califFinal,
+        ciclo_cursando: cicloCursando,
+      };
+      const response = await fetch(`${API_BASE_URL}/professor/saveGrade`, {
+        method: 'POST',
+        headers: getAuthHeaders(token),
+        body: JSON.stringify(payload),
+      });
+      const data: { message: string } = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Error al guardar la calificación.');
+      return data;
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error saving grade:", err);
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const fetchSchedules = async () => {
-    if (!isAuthenticated) return;
-    try {
-      const data = await api.getSchedules();
-      setSchedules(data);
-    } catch (error) {
-      console.error('Error al obtener horarios', error);
-    }
-  };
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchProfessors();
-      fetchStudents();
-      fetchSubjects();
-      fetchSchedules();
-    }
-  }, [isAuthenticated]);
 
   return (
     <DataContext.Provider
       value={{
-        professors,
-        students,
->>>>>>> 07a6dc4e49fc505fd097c61bf167116c69e1b61e
-        subjects,
-        students,
-        professors,
-        schedules,
-        addSubject,
-        updateSubject,
-        deleteSubject,
-        loading,
+        studentSubjects,
+        studentGrades,
+        studentKardex,
+        studentPayments,
+        professorSchedule,
+        professorQrSubjects,
+        professorGradingSubjects,
+        currentStudentsForGrading,
+        isLoading,
         error,
-        addProfessor,
-    };
+        fetchStudentSubjects,
+        fetchStudentGrades,
+        fetchStudentKardex,
+        fetchStudentPayments,
+        registerStudentAttendance,
+        fetchProfessorSchedule,
+        fetchProfessorQrSubjects,
+        fetchProfessorGradingSubjects,
+        fetchStudentsForGrading,
+        saveStudentGrade,
+      }}
+    >
+      {children}
+    </DataContext.Provider>
+  );
+};
 
-    return (
-        <DataContext.Provider value={contextValue}>
-            {children}
-        </DataContext.Provider>
-    );
+export const useDataContext = () => {
+  const context = useContext(DataContext);
+  if (context === undefined) {
+    throw new Error('useDataContext debe ser usado dentro de un DataProvider');
+  }
+  return context;
 };
