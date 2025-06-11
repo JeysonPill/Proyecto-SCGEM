@@ -10,6 +10,7 @@ const port = 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.json());
 
 const db = mysql.createConnection({
   host: '192.168.100.20',
@@ -69,6 +70,7 @@ app.post('/login', (req, res) => {
     });
     console.dir(res.json());
   });
+  console.log("Login attempt:", username, password);
 });
 
 ///////////////////////////////////////////////////////       ESTUDIANTES       ////////////////////////////////////////////////////////////////////////////////
